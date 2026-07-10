@@ -64,7 +64,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
 
       {/* Onder Section */}
       <div className="flex items-center justify-between">
-        <span className="text-[17px] font-black text-white tracking-tight">Onder</span>
+        <span className="text-[17px] font-black text-white tracking-tight">Hoogte</span>
         <div className="flex items-center gap-8">
           <button
             onClick={() => updateParapet(Math.max(CONFIG.PARAPET.MIN, p - CONFIG.PARAPET.STEP))}
