@@ -80,18 +80,18 @@ export function Step5Arrange({ config, onChange }: StepProps) {
         <button
           onClick={handlePrevFrame}
           disabled={selectedFrame === 0}
-          className="w-10 h-10 rounded-full bg-[#5E84A0] flex items-center justify-center text-white disabled:opacity-30 hover:bg-[#5E84A0] transition-all"
+          className="w-10 h-10 rounded-full bg-[#F0F0F0] flex items-center justify-center text-[#1A1A1A] disabled:opacity-30 hover:bg-[#F0F0F0] transition-all"
         >
           <ChevronLeft size={20} strokeWidth={3} />
         </button>
         
         <div className="flex flex-col items-center">
-          <span className="text-[11px] sm:text-[12px] font-semibold text-white uppercase tracking-wider">
+          <span className="text-[11px] sm:text-[12px] font-semibold text-[#1A1A1A] uppercase tracking-wider">
             Kozijn {selectedFrame + 1} van {copies}
           </span>
           <div className="flex items-center gap-2 mt-1">
-            <Maximize2 size={14} className="text-[#8D725C]" />
-            <span className="text-[14px] sm:text-[16px] font-black text-white">
+            <Maximize2 size={14} className="text-[#1A1A1A]" />
+            <span className="text-[14px] sm:text-[16px] font-black text-[#1A1A1A]">
               {Math.round(widths[selectedFrame] / 10)} cm
             </span>
           </div>
@@ -100,26 +100,26 @@ export function Step5Arrange({ config, onChange }: StepProps) {
         <button
           onClick={handleNextFrame}
           disabled={selectedFrame === copies - 1}
-          className="w-10 h-10 rounded-full bg-[#5E84A0] flex items-center justify-center text-white disabled:opacity-30 hover:bg-[#5E84A0] transition-all"
+          className="w-10 h-10 rounded-full bg-[#F0F0F0] flex items-center justify-center text-[#1A1A1A] disabled:opacity-30 hover:bg-[#F0F0F0] transition-all"
         >
           <ChevronRight size={20} strokeWidth={3} />
         </button>
       </div>
 
       {/* Width Adjuster for Selected Frame */}
-      <div className="bg-[#5E84A0]/70 rounded-2xl p-4 mb-4">
+      <div className="bg-[#F0F0F0]/70 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-[13px] font-semibold text-white">
+          <span className="text-[13px] font-semibold text-[#1A1A1A]">
             Breedte Kozijn {selectedFrame + 1}
           </span>
-          <span className="text-[18px] font-black text-[#8D725C]">
+          <span className="text-[18px] font-black text-[#1A1A1A]">
             {Math.round(widths[selectedFrame] / 10)} cm
           </span>
         </div>
         
         {/* Slider */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-white">{KOZ_MIN / 10}cm</span>
+          <span className="text-[11px] text-[#1A1A1A]">{KOZ_MIN / 10}cm</span>
           <input
             type="range"
             min={KOZ_MIN}
@@ -127,9 +127,9 @@ export function Step5Arrange({ config, onChange }: StepProps) {
             step={KOZ_STEP}
             value={widths[selectedFrame]}
             onChange={(e) => updateFrameWidth(selectedFrame, parseInt(e.target.value))}
-            className="flex-1 h-2 bg-[#7BA0BC] rounded-full appearance-none cursor-pointer accent-[#8D725C]"
+            className="flex-1 h-2 bg-[#E0E0E0] rounded-full appearance-none cursor-pointer accent-[#1A1A1A]"
           />
-          <span className="text-[11px] text-white">{KOZ_MAX / 10}cm</span>
+          <span className="text-[11px] text-[#1A1A1A]">{KOZ_MAX / 10}cm</span>
         </div>
         
         {/* Quick Adjust Buttons */}
@@ -137,14 +137,14 @@ export function Step5Arrange({ config, onChange }: StepProps) {
           <button
             onClick={() => updateFrameWidth(selectedFrame, widths[selectedFrame] - KOZ_STEP)}
             disabled={widths[selectedFrame] <= KOZ_MIN}
-            className="px-3 py-2 rounded-lg bg-[#5E84A0] text-white text-[12px] font-semibold hover:bg-[#5E84A0] disabled:opacity-30 transition-all"
+            className="px-3 py-2 rounded-lg bg-[#F0F0F0] text-[#1A1A1A] text-[12px] font-semibold hover:bg-[#F0F0F0] disabled:opacity-30 transition-all"
           >
             -{KOZ_STEP / 10}cm
           </button>
           <button
             onClick={() => updateFrameWidth(selectedFrame, widths[selectedFrame] + KOZ_STEP)}
             disabled={widths[selectedFrame] >= KOZ_MAX}
-            className="px-3 py-2 rounded-lg bg-[#5E84A0] text-white text-[12px] font-semibold hover:bg-[#5E84A0] disabled:opacity-30 transition-all"
+            className="px-3 py-2 rounded-lg bg-[#F0F0F0] text-[#1A1A1A] text-[12px] font-semibold hover:bg-[#F0F0F0] disabled:opacity-30 transition-all"
           >
             +{KOZ_STEP / 10}cm
           </button>
@@ -152,8 +152,8 @@ export function Step5Arrange({ config, onChange }: StepProps) {
       </div>
 
       {/* Frame Overview */}
-      <div className="bg-white/10 rounded-xl p-3">
-        <span className="text-[11px] font-semibold text-white uppercase tracking-wider block mb-2">
+      <div className="bg-black/5 rounded-xl p-3">
+        <span className="text-[11px] font-semibold text-[#1A1A1A] uppercase tracking-wider block mb-2">
           Overzicht alle kozijnen
         </span>
         <div className="flex flex-wrap gap-2">
@@ -163,8 +163,8 @@ export function Step5Arrange({ config, onChange }: StepProps) {
               onClick={() => setSelectedFrame(i)}
               className={`px-3 py-2 rounded-lg text-[12px] font-semibold transition-all ${
                 selectedFrame === i 
-                  ? 'bg-[#8D725C] text-white' 
-                  : 'bg-[#5E84A0] text-white hover:bg-[#5E84A0]'
+                  ? 'bg-[#1A1A1A] text-white' 
+                  : 'bg-[#F0F0F0] text-[#1A1A1A] hover:bg-[#F0F0F0]'
               }`}
             >
               K{i + 1}: {Math.round(width / 10)}cm

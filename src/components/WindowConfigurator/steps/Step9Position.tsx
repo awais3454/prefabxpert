@@ -54,31 +54,31 @@ export function Step9Position({ config, onChange }: StepProps) {
               className={`
                 group cursor-pointer rounded-[12px] p-4 transition-all duration-300 relative
                 ${isSelected
-                  ? "bg-[#8D725C]/20 border-2 border-[#8D725C] shadow-lg z-10"
-                  : "bg-[#6E94B0] border border-white/10 hover:border-white/20"}
+                  ? "bg-[#1A1A1A]/20 border-2 border-[#1A1A1A] shadow-lg z-10"
+                  : "bg-[#FFFFFF] border border-black/10 hover:border-black/20"}
               `}
             >
               <div className="flex flex-col">
                 <h3 className={`
                   text-[15px] font-black tracking-tight mb-1
-                  ${isSelected ? "text-[#8D725C]" : "text-white"}
+                  ${isSelected ? "text-[#1A1A1A]" : "text-[#1A1A1A]"}
                 `}>
                   {option.title}
                 </h3>
-                <p className="text-[13px] leading-relaxed text-slate-300 font-medium whitespace-normal">
+                <p className="text-[13px] leading-relaxed text-[#666666] font-medium whitespace-normal">
                   {option.description}
                 </p>
 
                 {isSelected && (
-                  <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-start gap-3 font-black">
+                  <div className="mt-3 pt-3 border-t border-black/10 flex items-center justify-start gap-3 font-black">
                     <div onClick={(e) => e.stopPropagation()}>
                       <Switch
                         checked={config.demountExisting}
                         onCheckedChange={(checked) => onChange({ ...config, demountExisting: checked })}
-                        className="data-[state=checked]:bg-[#8D725C] scale-90 origin-left border-2 border-[#8D725C] ring-1 ring-[#8D725C] ring-offset-2 ring-offset-[#6E94B0]"
+                        className="data-[state=checked]:bg-[#1A1A1A] scale-90 origin-left border-2 border-[#1A1A1A] ring-1 ring-[#1A1A1A] ring-offset-2 ring-offset-[#FFFFFF]"
                       />
                     </div>
-                    <span className="text-[12px] text-white">
+                    <span className="text-[12px] text-[#1A1A1A]">
                       Demontage bestaande dakkapel
                     </span>
                   </div>

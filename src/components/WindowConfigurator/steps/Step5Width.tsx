@@ -50,7 +50,7 @@ function Stepper({
 
   return (
     <div className="flex items-center justify-between mb-2">
-      <span className={`text-[17px] tracking-tighter ${bold ? 'font-black text-white' : 'font-semibold text-slate-200'}`}>
+      <span className={`text-[17px] tracking-tighter ${bold ? 'font-black text-[#1A1A1A]' : 'font-semibold text-[#444444]'}`}>
         {label}
       </span>
       <div className="flex items-center gap-8">
@@ -65,7 +65,7 @@ function Stepper({
         >
           <Minus size={14} strokeWidth={3} />
         </button>
-        <div className="text-[16px] font-black text-white min-w-[70px] text-center select-none tracking-tighter">
+        <div className="text-[16px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tighter">
           {Math.round(value / 10)} {unit}
         </div>
         <button
@@ -140,10 +140,10 @@ export function Step5Width({ config, onChange }: StepProps) {
 
       {/* 2x zijwang */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[17px] font-normal text-slate-300 tracking-tight">2x zijwang</span>
+        <span className="text-[17px] font-normal text-[#666666] tracking-tight">2x zijwang</span>
         <div className="flex items-center gap-8">
           <div className="w-[42px]" />
-          <div className="text-[15px] font-normal text-slate-300 min-w-[70px] text-center select-none tracking-tight">
+          <div className="text-[15px] font-normal text-[#666666] min-w-[70px] text-center select-none tracking-tight">
             {SIDE_CHEEK_TOTAL / 10} cm
           </div>
           <div className="w-[42px]" />
@@ -151,11 +151,11 @@ export function Step5Width({ config, onChange }: StepProps) {
       </div>
 
       {/* Totaal */}
-      <div className="flex items-center justify-between mt-1 pt-1 border-t border-white/10">
-        <span className="text-[17px] font-black text-white tracking-tighter">Totaal</span>
+      <div className="flex items-center justify-between mt-1 pt-1 border-t border-black/10">
+        <span className="text-[17px] font-black text-[#1A1A1A] tracking-tighter">Totaal</span>
         <div className="flex items-center gap-8">
           <div className="w-[42px]" />
-          <div className="text-[16px] font-black text-white min-w-[70px] text-center select-none tracking-tighter">
+          <div className="text-[16px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tighter">
             {Math.round(totalWidth / 10)} cm
           </div>
           <div className="w-[42px]" />

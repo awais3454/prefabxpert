@@ -64,24 +64,30 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
 
   return (
     <div className="h-full w-full sm:absolute sm:inset-0 sm:pointer-events-none">
-      <div className="h-full w-full sm:absolute sm:bottom-6 sm:left-6 sm:right-auto sm:h-auto sm:max-h-[85vh] sm:pointer-events-auto sm:flex sm:w-[480px] sm:flex-col sm:rounded-[24px] sm:shadow-2xl sm:border sm:border-white/10 sm:backdrop-blur-sm bg-[#6E94B0] flex flex-col rounded-t-[20px] border-t border-white/10 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 ease-in-out">
+      <div className="h-full w-full sm:absolute sm:bottom-6 sm:left-6 sm:right-auto sm:h-auto sm:max-h-[85vh] sm:pointer-events-auto sm:flex sm:w-[480px] sm:flex-col sm:rounded-[24px] sm:shadow-2xl sm:border sm:border-black/10 sm:backdrop-blur-sm bg-[#FFFFFF] flex flex-col rounded-t-[20px] border-t border-black/10 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
         {currentStep !== 12 && (
           <div className="w-full px-4 pt-4 pb-2 sm:px-6 sm:pt-6 sm:pb-3 flex flex-col">
-            {/* Row 1: Logo (left) + Help (right) */}
-            <div className="flex items-center justify-between w-full">
-              <Logo />
+            {/* Header Row: Logo (Absolute) + Centered Title + Help (Absolute) */}
+            <div className="flex items-center justify-center mb-3 min-h-[32px] relative w-full">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <Logo />
+              </div>
+              
+              <h2 className="text-[16px] sm:text-[20px] font-black text-[#1A1A1A] leading-tight tracking-tighter text-center">
+                {STEP_LABELS[currentStep - 1]}
+              </h2>
 
               <Dialog>
                 <DialogTrigger asChild>
-                  <button className="h-[22px] w-[22px] rounded-full bg-white flex items-center justify-center text-black text-[13px] font-black shadow-sm hover:bg-slate-200 transition-colors focus:outline-none">
+                  <button className="h-[22px] w-[22px] rounded-full bg-white flex items-center justify-center text-black text-[13px] font-black shadow-sm hover:bg-slate-200 transition-colors focus:outline-none absolute right-0 top-1/2 -translate-y-1/2">
                     ?
                   </button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[720px] rounded-[32px] border-none p-0 overflow-hidden bg-[#6E94B0] shadow-2xl focus:outline-none">
+                <DialogContent className="sm:max-w-[720px] rounded-[32px] border-none p-0 overflow-hidden bg-[#FFFFFF] shadow-2xl focus:outline-none">
                   <div className="w-full">
-                    <DialogHeader className="px-8 pt-4 pb-1 flex flex-row items-center justify-between space-y-0 border-b border-white/10">
-                      <DialogTitle className="text-[16px] font-black text-white tracking-tight">
+                    <DialogHeader className="px-8 pt-4 pb-1 flex flex-row items-center justify-between space-y-0 border-b border-black/10">
+                      <DialogTitle className="text-[16px] font-black text-[#1A1A1A] tracking-tight">
                         {getDialogContent(currentStep).title}
                       </DialogTitle>
                     </DialogHeader>
@@ -93,14 +99,9 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
               </Dialog>
             </div>
 
-            {/* Row 2: Heading — full width, centered, wraps to 2 lines if long instead of overlapping the logo */}
-            <h2 className="text-[16px] sm:text-[20px] font-black text-white leading-tight tracking-tighter text-center mt-2 mb-3 w-full px-1">
-              {STEP_LABELS[currentStep - 1]}
-            </h2>
-
             {/* Subtitle Row */}
             <div className="w-full px-1 text-center">
-              <p className="text-[12px] sm:text-[14px] text-slate-300 font-medium tracking-tight leading-snug">
+              <p className="text-[12px] sm:text-[14px] text-[#666666] font-medium tracking-tight leading-snug">
                 {getSubtitle(currentStep)}
               </p>
             </div>
@@ -119,9 +120,9 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
 
         {/* Total Price Bar — desktop only */}
         {currentStep !== 12 && (
-          <div className="hidden sm:flex w-full border-t border-white/10 bg-[#6E94B0] px-5 py-2.5 items-center justify-between flex-shrink-0">
-            <span className="text-[13px] font-bold text-white tracking-tight">Totaalprijs</span>
-            <span className="text-[16px] font-black text-[#8D725C] tracking-tight">
+          <div className="hidden sm:flex w-full border-t border-black/10 bg-[#FFFFFF] px-5 py-2.5 items-center justify-between flex-shrink-0">
+            <span className="text-[13px] font-bold text-[#1A1A1A] tracking-tight">Totaalprijs</span>
+            <span className="text-[16px] font-black text-[#1A1A1A] tracking-tight">
               {formatPrice(pricing.totalPrice)}
             </span>
           </div>
@@ -134,7 +135,7 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
               {currentStep > 1 ? (
                 <button
                   onClick={prevStep}
-                  className="h-[34px] px-4 rounded-full bg-[#5E84A0] flex items-center gap-1 text-slate-200 hover:bg-[#5E84A0] transition-all flex-shrink-0"
+                  className="h-[34px] px-4 rounded-full bg-[#F0F0F0] flex items-center gap-1 text-[#444444] hover:bg-[#F0F0F0] transition-all flex-shrink-0"
                 >
                   <ChevronLeft size={12} strokeWidth={3} />
                   {currentStep !== 11 && (
@@ -146,8 +147,8 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
 
             {/* Total price — center, mobile only */}
             <div className="flex sm:hidden flex-col items-center flex-1">
-              <span className="text-[10px] font-bold text-slate-400 tracking-tight">Totaalprijs</span>
-              <span className="text-[14px] font-black text-[#8D725C] tracking-tight leading-tight">
+              <span className="text-[10px] font-bold text-[#888888] tracking-tight">Totaalprijs</span>
+              <span className="text-[14px] font-black text-[#1A1A1A] tracking-tight leading-tight">
                 {formatPrice(pricing.totalPrice)}
               </span>
             </div>
@@ -156,14 +157,14 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
               {currentStep === 11 && (
                 <button
                   onClick={() => { }}
-                  className="h-[34px] px-3 rounded-full border border-[#5E84A0] bg-[#5E84A0] text-white text-[11px] font-black hover:bg-[#5E84A0] transition-all whitespace-nowrap shadow-sm"
+                  className="h-[34px] px-3 rounded-full border border-[#F0F0F0] bg-[#F0F0F0] text-[#1A1A1A] text-[11px] font-black hover:bg-[#F0F0F0] transition-all whitespace-nowrap shadow-sm"
                 >
                   Extra dakkapel toevoegen
                 </button>
               )}
               <button
                 onClick={nextStep}
-                className="h-[34px] px-4 rounded-full font-black text-[11px] text-white bg-[#8D725C] hover:bg-[#8D725C] transition-all shadow-sm whitespace-nowrap"
+                className="h-[34px] px-4 rounded-full font-black text-[11px] text-white bg-[#1A1A1A] hover:bg-[#1A1A1A] transition-all shadow-sm whitespace-nowrap"
               >
                 {currentStep === 11 ? "Aanvraag afronden" : "Volgende"}
               </button>
@@ -173,18 +174,18 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
 
         {/* Centered Progress Bar and Step Counter at the "Bottom Buttom" */}
         <div className="w-full flex flex-col items-center pb-10 pt-3 gap-1 relative">
-          <span className="text-[11px] font-black text-white uppercase tracking-widest" style={{ opacity: 1 }}>
+          <span className="text-[11px] font-black text-[#1A1A1A] uppercase tracking-widest" style={{ opacity: 1 }}>
             {currentStep} van 11
           </span>
-          <div className="h-[4px] w-[90%] bg-[#5E84A0] relative overflow-hidden rounded-full mb-1">
+          <div className="h-[4px] w-[90%] bg-[#F0F0F0] relative overflow-hidden rounded-full mb-1">
             <div
-              className="h-full bg-[#8D725C] transition-all duration-700 ease-in-out rounded-full"
+              className="h-full bg-[#1A1A1A] transition-all duration-700 ease-in-out rounded-full"
               style={{ width: `${(currentStep / 11) * 100}%` }}
             />
           </div>
           
           <div className="absolute right-6 bottom-4">
-            <span className="text-[9px] font-black text-white uppercase tracking-widest">
+            <span className="text-[9px] font-black text-[#1A1A1A] uppercase tracking-widest">
               {config.styleType === "traditional" ? "Traditioneel" : "Kader"}
             </span>
           </div>

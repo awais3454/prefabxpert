@@ -686,8 +686,12 @@ function createShutterTexture(): THREE.CanvasTexture {
 }
 
 /** Roller shutter with side guide rails - covers window and animates down from top */
-function RollerShutter({ W, winH, roofH, color, openPercent }: { W: number; winH: number; roofH: number; color: string; openPercent: number }) {
+function RollerShutter({ W, winH, roofH, color, guideColor, openPercent }: { W: number; winH: number; roofH: number; color: string; guideColor: string; openPercent: number }) {
   const animatedColor = useAnimatedColor(color, 0.08)
+  // Guides/housing keep their own colour (independent of the chosen shutter colour).
+  // Darken slightly so the frame stays visible against a light window frame.
+  const guideBase = useMemo(() => new THREE.Color(guideColor).multiplyScalar(0.72), [guideColor])
+  const animatedGuideColor = useAnimatedColor(`#${guideBase.getHexString()}`, 0.08)
   const texture = useMemo(() => createShutterTexture(), [])
   const matRef = useRef(new THREE.MeshStandardMaterial({
     roughness: 0.4,
@@ -696,7 +700,7 @@ function RollerShutter({ W, winH, roofH, color, openPercent }: { W: number; winH
     bumpMap: texture,
     bumpScale: 0.02
   }))
-  const guideMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.15, color }))
+  const guideMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.15, color: guideColor }))
   const [scale, setScale] = useState(openPercent / 100)
   const [targetOpen, setTargetOpen] = useState(openPercent)
   const [isClosed, setIsClosed] = useState(openPercent >= 90)
@@ -711,8 +715,10 @@ function RollerShutter({ W, winH, roofH, color, openPercent }: { W: number; winH
   }, [openPercent])
 
   useFrame((_, delta) => {
+    // Only the shutter curtain (slats) takes the chosen shutter color.
+    // The guides/housing/frame keep their own colour so the border doesn't change.
     matRef.current.color.lerp(animatedColor, 0.1)
-    guideMatRef.current.color.lerp(animatedColor, 0.1)
+    guideMatRef.current.color.lerp(animatedGuideColor, 0.1)
     const targetScale = targetOpen / 100
     setScale(prev => prev + (targetScale - prev) * Math.min(delta * 8, 1))
 
@@ -1334,6 +1340,7 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
                   winH={winH}
                   roofH={H - winYBottom}
                   color={config.shutterColor || frameColor}
+                  guideColor={frameColor}
                   openPercent={shutterOpen}
                 />
               )}

@@ -31,7 +31,7 @@ export function Step2Pitch({ config, onChange }: StepProps) {
   return (
     <div className="flex flex-col flex-1 px-10 pt-0 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 step-2-pitch-container overflow-hidden text-center">
 
-      <p className="text-[12px] text-slate-100 font-medium mb-2 pt-5 leading-tight">
+      <p className="text-[12px] text-[#1A1A1A] font-medium mb-2 pt-5 leading-tight">
         Gebruik deze ontwerp tool via telefoon om de graden te meten.
       </p>
 
@@ -45,7 +45,7 @@ export function Step2Pitch({ config, onChange }: StepProps) {
           <Minus size={14} strokeWidth={3} />
         </button>
 
-        <div className="text-[17px] font-black text-white min-w-[70px] text-center select-none tracking-tight">
+        <div className="text-[17px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tight">
           {value}°
         </div>
 
@@ -64,8 +64,8 @@ export function Step2Pitch({ config, onChange }: StepProps) {
           onClick={() => onChange({ ...config, pitchUnknown: !config.pitchUnknown })}
           className={`rounded-full border py-[10px] px-[22px] text-[13px] font-black tracking-tight transition-all duration-200 ${
             config.pitchUnknown
-              ? "border-[#8D725C] bg-[#8D725C] text-white"
-              : "border-white/15 bg-[#6E94B0] text-slate-200 hover:border-white/30"
+              ? "border-[#1A1A1A] bg-[#1A1A1A] text-white"
+              : "border-black/15 bg-[#FFFFFF] text-[#444444] hover:border-black/30"
           }`}
         >
           Weet ik niet

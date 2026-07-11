@@ -26,7 +26,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
 
       {/* Hoogte Section */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[17px] font-black text-white tracking-tight">Hoogte</span>
+        <span className="text-[17px] font-black text-[#1A1A1A] tracking-tight">Hoogte</span>
         <div className="flex items-center gap-8">
           <button
             onClick={() => updateHeight(Math.max(CONFIG.HEIGHT.MIN, h - CONFIG.HEIGHT.STEP))}
@@ -35,7 +35,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
           >
             <Minus size={14} strokeWidth={3} />
           </button>
-          <div className="text-[16px] font-black text-white min-w-[70px] text-center select-none tracking-tight">
+          <div className="text-[16px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tight">
             {Math.round(h / 10)} cm
           </div>
           <button
@@ -59,12 +59,12 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
 
       {/* Borstwering Section Header */}
       <div className="w-full flex justify-center mb-1 mt-4">
-        <h3 className="text-[17px] font-black text-white tracking-tight text-center">Borstwering</h3>
+        <h3 className="text-[17px] font-black text-[#1A1A1A] tracking-tight text-center">Borstwering</h3>
       </div>
 
       {/* Onder Section */}
       <div className="flex items-center justify-between">
-        <span className="text-[17px] font-black text-white tracking-tight">Hoogte</span>
+        <span className="text-[17px] font-black text-[#1A1A1A] tracking-tight">Onder</span>
         <div className="flex items-center gap-8">
           <button
             onClick={() => updateParapet(Math.max(CONFIG.PARAPET.MIN, p - CONFIG.PARAPET.STEP))}
@@ -73,7 +73,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
           >
             <Minus size={14} strokeWidth={3} />
           </button>
-          <div className="text-[16px] font-black text-white min-w-[70px] text-center select-none tracking-tight">
+          <div className="text-[16px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tight">
             {Math.round(p / 10)} cm
           </div>
           <button

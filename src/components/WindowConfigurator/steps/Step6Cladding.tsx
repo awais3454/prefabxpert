@@ -30,22 +30,22 @@ export function Step6Cladding({ config, onChange }: StepProps) {
             className={`
               flex flex-col items-start gap-1 rounded-[12px] border py-[12px] px-[18px] text-left transition-all duration-200
               ${config.claddingMaterial === option.id
-                ? "border-[#8D725C] bg-[#8D725C]/10 shadow-md"
-                : "border-white/10 bg-[#6E94B0] hover:border-white/20"
+                ? "border-[#1A1A1A] bg-[#1A1A1A]/10 shadow-md"
+                : "border-black/10 bg-[#FFFFFF] hover:border-black/20"
               }
             `}
           >
             <div className="flex items-center justify-between w-full">
-              <span className={`text-[16px] font-black tracking-tighter ${config.claddingMaterial === option.id ? "text-[#8D725C]" : "text-white"}`}>
+              <span className={`text-[16px] font-black tracking-tighter ${config.claddingMaterial === option.id ? "text-[#1A1A1A]" : "text-[#1A1A1A]"}`}>
                 {option.title}
               </span>
               {(option as any).priceLabel && (
-                <span className="text-[12px] font-semibold text-white tracking-tight">
+                <span className="text-[12px] font-semibold text-[#1A1A1A] tracking-tight">
                   {(option as any).priceLabel}
                 </span>
               )}
             </div>
-            <p className="text-[14px] leading-tight text-slate-300 font-medium opacity-90">
+            <p className="text-[14px] leading-tight text-[#666666] font-medium opacity-90">
               {option.description}
             </p>
           </button>
