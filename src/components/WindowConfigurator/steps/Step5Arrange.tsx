@@ -152,7 +152,7 @@ export function Step5Arrange({ config, onChange }: StepProps) {
       </div>
 
       {/* Frame Overview */}
-      <div className="bg-[#6E94B0]/8 rounded-xl p-3">
+      <div className="bg-[#F0F0F0] rounded-xl p-3">
         <span className="text-[11px] font-semibold text-[#6E94B0] uppercase tracking-wider block mb-2">
           Overzicht alle kozijnen
         </span>
