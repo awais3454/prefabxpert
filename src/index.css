@@ -37,7 +37,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --foreground: 205 30% 57%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -45,11 +45,11 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 0 0% 10%;
-    /* #1A1A1A Brown (matches reference button) */
+    --primary: 205 30% 57%;
+    /* #6E94B0 Brown (matches reference button) */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 0 0% 10%;
+    --secondary: 205 30% 57%;
     /* Brown */
     --secondary-foreground: 210 40% 98%;
 
@@ -64,7 +64,7 @@ All colors MUST be HSL.
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 0 0% 10%;
+    --ring: 205 30% 57%;
 
     --radius: 0.5rem;
 
@@ -95,10 +95,10 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 0 0% 10%;
+    --primary: 205 30% 57%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 0 0% 10%;
+    --secondary: 205 30% 57%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
@@ -112,15 +112,15 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 0 0% 10%;
+    --ring: 205 30% 57%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary: 205 30% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 0 0% 10%;
+    --sidebar-ring: 205 30% 57%;
   }
 }
 
@@ -153,7 +153,7 @@ All colors MUST be HSL.
   overflow-x: hidden !important;
   overflow-y: auto !important;
   scrollbar-width: thin;
-  scrollbar-color: #1A1A1A transparent;
+  scrollbar-color: #6E94B0 transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -166,20 +166,20 @@ All colors MUST be HSL.
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #1A1A1A;
+  background-color: #6E94B0;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #1A1A1A;
+  background-color: #6E94B0;
 }
 
 /* Custom Overrides for Dialogs and Inputs */
 [role="dialog"],
 .DialogContent {
   background-color: #FFFFFF !important;
-  color: #1A1A1A !important;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #4A7593 !important;
+  border: 1px solid rgba(110, 148, 176, 0.35) !important;
 }
 
 [role="dialog"] p,
@@ -192,19 +192,19 @@ All colors MUST be HSL.
 [role="dialog"] [class*="text-slate-"],
 [role="dialog"] [class*="text-zinc-"],
 [role="dialog"] [class*="text-black"] {
-  color: #1A1A1A !important;
+  color: #4A7593 !important;
 }
 
 [role="dialog"] a {
-  text-decoration-color: #1A1A1A !important;
+  text-decoration-color: #6E94B0 !important;
 }
 
 [role="dialog"] .bg-slate-300 {
-  background-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(110, 148, 176, 0.35) !important;
 }
 
 [role="dialog"] .border-slate-100\/60 {
-  border-color: rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(110, 148, 176, 0.35) !important;
 }
 
 /* Step 10 Request Form & General Input Overrides */
@@ -215,8 +215,8 @@ select.bg-white,
 div[class*="bg-white"] input,
 div[class*="bg-white"] textarea {
   background-color: #FFFFFF !important;
-  color: #1A1A1A !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: #4A7593 !important;
+  border-color: rgba(110, 148, 176, 0.35) !important;
 }
 
 /* Target specific utility classes for text that might stay dark */
@@ -230,7 +230,7 @@ div[class*="bg-white"] textarea {
 .pointer-events-auto [class*="text-slate-"]:not([class*="text-slate-900"]),
 .pointer-events-auto [class*="text-zinc-"],
 .pointer-events-auto [class*="text-black"] {
-  color: #1A1A1A !important;
+  color: #4A7593 !important;
 }
 
 /* Target bold highlights and underlines in dialogs with Brown theme */
@@ -239,8 +239,8 @@ div[class*="bg-white"] textarea {
 [role="dialog"] .font-extrabold,
 [role="dialog"] strong,
 [role="dialog"] [class*="decoration-slate-900"] {
-  color: #1A1A1A !important;
-  text-decoration-color: #1A1A1A !important;
+  color: #6E94B0 !important;
+  text-decoration-color: #6E94B0 !important;
 }
 
 /* Fix for plus/minus icons on white buttons (Prevents global white text override) */

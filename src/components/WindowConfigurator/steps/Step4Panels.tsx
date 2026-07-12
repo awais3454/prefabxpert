@@ -44,7 +44,7 @@ export function Step4Panels({ config, onChange }: StepProps) {
           <Minus size={14} strokeWidth={3} />
         </button>
 
-        <div className="text-[17px] font-black text-[#1A1A1A] min-w-[70px] text-center select-none tracking-tight">
+        <div className="text-[17px] font-black text-[#6E94B0] min-w-[70px] text-center select-none tracking-tight">
           {value}
         </div>
 

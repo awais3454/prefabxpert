@@ -43,13 +43,13 @@ export function getDialogContent(currentStep: number): DialogInfo {
         title: "Extra informatie dakkapel types",
         content: (
           <div className="space-y-4">
-            <p className="text-[17px] text-[#1A1A1A] leading-relaxed font-bold">
+            <p className="text-[17px] text-[#6E94B0] leading-relaxed font-bold">
               De traditionele dakkapel is de meest gekozen dakkapel: tijdloos en perfect passend bij verscheidene bouwstijlen.
             </p>
-            <p className="text-[17px] text-[#1A1A1A] leading-relaxed font-medium">
+            <p className="text-[17px] text-[#6E94B0] leading-relaxed font-medium">
               De kader dakkapel kenmerkt zich door een strakke vormgeving, met standaard hpl-bekleding.
             </p>
-            <p className="text-[17px] text-[#1A1A1A] leading-relaxed font-medium">
+            <p className="text-[17px] text-[#6E94B0] leading-relaxed font-medium">
               Zelf iets moois gezien? We denken graag met u mee. Neem contact op voor een maatwerkoplossing die aansluit bij uw wensen.
             </p>
           </div>
@@ -59,7 +59,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie hellingshoek",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium">
+          <div className="space-y-4 text-[#6E94B0] font-medium">
             <p className="text-[17px] leading-relaxed">
               De hellingshoek van het dak is belangrijk voor het bepalen van de afmetingen van de dakkapel. De hellingshoek is de hoek tussen het dak en de vloer.
             </p>
@@ -73,13 +73,13 @@ export function getDialogContent(currentStep: number): DialogInfo {
               <li className="text-[17px] leading-relaxed flex items-start gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2.5 flex-shrink-0" />
                 <span>
-                  <span className="font-extrabold text-[#1A1A1A]">Digitale waterpas:</span> Houd deze tegen het dakbeschot aan de binnenkant van het dak en lees de graden af.
+                  <span className="font-extrabold text-[#6E94B0]">Digitale waterpas:</span> Houd deze tegen het dakbeschot aan de binnenkant van het dak en lees de graden af.
                 </span>
               </li>
               <li className="text-[17px] leading-relaxed flex items-start gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2.5 flex-shrink-0" />
                 <span>
-                  <span className="font-extrabold text-[#1A1A1A]">Smartphone app:</span> Download een gratis hellingmeter app via de <a href="https://apps.apple.com/nl/app/waterpas-en-hellingmeter-app/id1672836817" target="_blank" rel="noopener noreferrer" className="underline decoration-white font-extrabold text-[#1A1A1A] cursor-pointer">App Store</a> of <a href="https://play.google.com/store/apps/details?id=com.syleosapps.inclinometer&hl=nl&gl=US&pli=1" target="_blank" rel="noopener noreferrer" className="underline decoration-white font-extrabold text-[#1A1A1A] cursor-pointer">Google Play</a> en meet de hoek eenvoudig.
+                  <span className="font-extrabold text-[#6E94B0]">Smartphone app:</span> Download een gratis hellingmeter app via de <a href="https://apps.apple.com/nl/app/waterpas-en-hellingmeter-app/id1672836817" target="_blank" rel="noopener noreferrer" className="underline decoration-white font-extrabold text-[#6E94B0] cursor-pointer">App Store</a> of <a href="https://play.google.com/store/apps/details?id=com.syleosapps.inclinometer&hl=nl&gl=US&pli=1" target="_blank" rel="noopener noreferrer" className="underline decoration-white font-extrabold text-[#6E94B0] cursor-pointer">Google Play</a> en meet de hoek eenvoudig.
                 </span>
               </li>
             </ul>
@@ -90,10 +90,10 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie hoogte dakkapel",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium pt-0">
+          <div className="space-y-4 text-[#6E94B0] font-medium pt-0">
             <div className="space-y-2">
               <p className="text-[17px] leading-relaxed">
-                <span className="font-extrabold text-[#1A1A1A]">Hoogte bepalen:</span> De totale hoogte van een dakkapel is de afstand van de vloer tot de bovenkant van de dakkapel. Die bestaat uit:
+                <span className="font-extrabold text-[#6E94B0]">Hoogte bepalen:</span> De totale hoogte van een dakkapel is de afstand van de vloer tot de bovenkant van de dakkapel. Die bestaat uit:
               </p>
               <ul className="space-y-1">
                 <li className="text-[17px] leading-relaxed flex items-start gap-2 pl-4">
@@ -111,11 +111,11 @@ export function getDialogContent(currentStep: number): DialogInfo {
             </div>
 
             <p className="text-[17px] leading-relaxed">
-              <span className="font-extrabold text-[#1A1A1A]">Vergunningsplicht:</span> Een dakkapel van 1,75 m of lager valt meestal buiten vergunningsplicht (mits hij ook aan andere voorwaarden voldoet). Bij meer dan 1,75 m is wél een vergunning nodig.
+              <span className="font-extrabold text-[#6E94B0]">Vergunningsplicht:</span> Een dakkapel van 1,75 m of lager valt meestal buiten vergunningsplicht (mits hij ook aan andere voorwaarden voldoet). Bij meer dan 1,75 m is wél een vergunning nodig.
             </p>
 
             <p className="text-[17px] leading-relaxed">
-              <span className="font-extrabold text-[#1A1A1A]">Borstwering:</span> Een borstwering is een extra dicht paneel onder het raam, voor wie het kozijn hoger wil plaatsen. Dit element wordt vaak gebruikt om meer loopruimte te creëren.
+              <span className="font-extrabold text-[#6E94B0]">Borstwering:</span> Een borstwering is een extra dicht paneel onder het raam, voor wie het kozijn hoger wil plaatsen. Dit element wordt vaak gebruikt om meer loopruimte te creëren.
             </p>
           </div>
         )
@@ -124,7 +124,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie tussenpanelen",
         content: (
-          <div className="space-y-3 text-[#1A1A1A] font-medium">
+          <div className="space-y-3 text-[#6E94B0] font-medium">
             <p className="text-[15px] leading-relaxed">
               Achter een tussenpaneel, ook wel penant genoemd, kunt u een wand plaatsen om 2 of meerdere kamers te maken. Daarnaast wordt een tussenpaneel ook gebruikt om een kast achter te plaatsen.
             </p>
@@ -135,22 +135,22 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie indeling kozijnen",
         content: (
-          <div className="space-y-3 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-3 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
               In deze stap stelt u de breedte van elk individueel kozijn in.
             </p>
             <ul className="space-y-2">
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Selecteer een kozijn:</span> Gebruik de pijltjes of klik op een kozijn om het te selecteren.</span>
+                <span><span className="font-bold text-[#6E94B0]">Selecteer een kozijn:</span> Gebruik de pijltjes of klik op een kozijn om het te selecteren.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Camera zoomt in:</span> De camera zoomt automatisch in op het geselecteerde kozijn.</span>
+                <span><span className="font-bold text-[#6E94B0]">Camera zoomt in:</span> De camera zoomt automatisch in op het geselecteerde kozijn.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Stel de breedte in:</span> Gebruik de slider of de +/- knoppen om de breedte aan te passen.</span>
+                <span><span className="font-bold text-[#6E94B0]">Stel de breedte in:</span> Gebruik de slider of de +/- knoppen om de breedte aan te passen.</span>
               </li>
             </ul>
             <p className="text-[15px] leading-relaxed">
@@ -163,22 +163,22 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie breedte & penanten",
         content: (
-          <div className="space-y-3 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-3 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
               De totale breedte van uw dakkapel bestaat uit de volgende elementen:
             </p>
             <ul className="space-y-2">
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Kozijnbreedte:</span> De breedte van elk kozijn die u in de vorige stap heeft ingesteld.</span>
+                <span><span className="font-bold text-[#6E94B0]">Kozijnbreedte:</span> De breedte van elk kozijn die u in de vorige stap heeft ingesteld.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Penanten:</span> De tussenwanden tussen de kozijnen. De breedte hiervan kunt u hier aanpassen.</span>
+                <span><span className="font-bold text-[#6E94B0]">Penanten:</span> De tussenwanden tussen de kozijnen. De breedte hiervan kunt u hier aanpassen.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-white/60 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#1A1A1A]">Zijwangen:</span> Aan beide zijkanten van de dakkapel plaatsen wij standaard een vaste zijwang van 16 cm, met een afwerkbalk van 4,4 cm.</span>
+                <span><span className="font-bold text-[#6E94B0]">Zijwangen:</span> Aan beide zijkanten van de dakkapel plaatsen wij standaard een vaste zijwang van 16 cm, met een afwerkbalk van 4,4 cm.</span>
               </li>
             </ul>
             <p className="text-[15px] leading-relaxed">
@@ -194,7 +194,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie bekleding",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
               Rondkantpanelen is een kunststof bekleding met de uitstraling van hout (rabatdelen). Veel mensen kiezen dit vanwege de warme, traditionele look en de gunstige prijs.
             </p>
@@ -211,12 +211,12 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie dakkapel",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
-              <span className="font-extrabold text-[#1A1A1A]">Dakbedekking:</span> Kies tussen bitumen of EPDM als afwerking van het platte dak van de dakkapel. Beide zijn waterdicht en duurzaam.
+              <span className="font-extrabold text-[#6E94B0]">Dakbedekking:</span> Kies tussen bitumen of EPDM als afwerking van het platte dak van de dakkapel. Beide zijn waterdicht en duurzaam.
             </p>
             <p className="text-[15px] leading-relaxed">
-              <span className="font-extrabold text-[#1A1A1A]">Aansluiting pannendak:</span> De aansluiting op uw bestaande pannendak kan met lood of met een loodvervanger worden uitgevoerd.
+              <span className="font-extrabold text-[#6E94B0]">Aansluiting pannendak:</span> De aansluiting op uw bestaande pannendak kan met lood of met een loodvervanger worden uitgevoerd.
             </p>
           </div>
         )
@@ -225,14 +225,14 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra informatie kleuren",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
               Voor de dakkapel (voorkant, zijwangen en boei) kunt u kiezen uit 12 kleuren, waaronder Wit (RAL 9010) en Crème wit (RAL 9001) als standaard opties.
             </p>
             <p className="text-[15px] leading-relaxed">
               Voor kozijnen en draaikiepramen zijn 11 kleuren beschikbaar. Monumentenblauw is alleen beschikbaar voor de dakkapel, niet voor kozijnen.
             </p>
-            <p className="text-[15px] leading-relaxed font-bold text-[#1A1A1A]">
+            <p className="text-[15px] leading-relaxed font-bold text-[#6E94B0]">
               Toch liever een andere kleur of houtkleurig met nerf? Neem contact met ons op voor de mogelijkheden!
             </p>
           </div>
@@ -242,11 +242,11 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Extra opties voor uw dakkapel",
         content: (
-          <div className="space-y-2 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-2 text-[#6E94B0] font-medium pb-2">
             <p className="text-[17px] leading-relaxed">
               Naast rolluiken, insectenhorren of ventilatieroosters kunt u ook kiezen voor een screen aan de buitenkant of plissé raambekleding aan de binnenkant.
             </p>
-            <p className="text-[17px] leading-relaxed font-bold text-[#1A1A1A]">
+            <p className="text-[17px] leading-relaxed font-bold text-[#6E94B0]">
               Laat u informeren over de vele mogelijkheden door één van onze adviseurs.
             </p>
           </div>
@@ -256,7 +256,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Informatie positie dakkapel",
         content: (
-          <div className="space-y-4 text-[#1A1A1A] font-medium pb-2">
+          <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[17px] leading-relaxed">
               De positie van de dakkapel op uw woning bepaalt of u een vergunning nodig heeft. Voor een dakkapel aan de achterzijde heeft u meestal geen vergunning nodig.
             </p>
@@ -270,7 +270,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
       return {
         title: "Informatie",
         content: (
-          <p className="text-[17px] text-[#1A1A1A] leading-relaxed font-medium">
+          <p className="text-[17px] text-[#6E94B0] leading-relaxed font-medium">
             Hier vindt u extra informatie over deze stap in het configuratieproces.
           </p>
         )

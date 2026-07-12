@@ -30,15 +30,15 @@ const ColorSection = ({
   return (
     <div className="flex flex-col gap-3 mb-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-[17px] font-black text-[#1A1A1A] tracking-tighter">
+        <h3 className="text-[17px] font-black text-[#6E94B0] tracking-tighter">
           {title}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-[#666666] tracking-tight">
+          <span className="text-[11px] font-medium text-[#5E84A0] tracking-tight">
             {formatColorLabel(activeColor)}
           </span>
           <div
-            className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+            className="w-5 h-5 rounded-full shadow-sm border border-[#6E94B0]/25"
             style={{ backgroundColor: activeColor.hex }}
           />
         </div>
@@ -53,7 +53,7 @@ const ColorSection = ({
               onClick={() => onSelect(color.hex)}
               className={`
                 w-[32px] h-[32px] rounded-full transition-all duration-200 relative group flex items-center justify-center
-                ${isSelected ? "scale-110 shadow-lg ring-2 ring-white ring-offset-2 ring-offset-[#FFFFFF]" : "hover:scale-105 border border-black/10"}
+                ${isSelected ? "scale-110 shadow-lg ring-2 ring-white ring-offset-2 ring-offset-[#FFFFFF]" : "hover:scale-105 border border-[#6E94B0]/25"}
               `}
               style={{ backgroundColor: color.hex }}
               title={formatColorLabel(color)}
@@ -63,7 +63,7 @@ const ColorSection = ({
                   w-full h-full rounded-full border-[7px]
                   ${LIGHT_COLOR_IDS.has(color.id)
                     ? "border-[#363C41]"
-                    : "border-black/20"}
+                    : "border-[#6E94B0]/40"}
                 `} />
               )}
             </button>

@@ -20,14 +20,14 @@ export function WindowConfigurator() {
       {/* 360 rotation hint — top-left, dismissable */}
       {showRotateHint && (
         <div className="absolute top-4 left-4 z-30 max-w-[260px] sm:max-w-[300px] pointer-events-auto animate-in fade-in slide-in-from-left-4 duration-500">
-          <div className="flex items-start gap-2 rounded-[14px] bg-[#FFFFFF]/90 backdrop-blur-sm border border-black/10 shadow-xl px-4 py-3">
-            <p className="text-[12px] sm:text-[13px] text-[#1A1A1A] font-medium leading-snug tracking-tight">
+          <div className="flex items-start gap-2 rounded-[14px] bg-[#FFFFFF]/90 backdrop-blur-sm border border-[#6E94B0]/25 shadow-xl px-4 py-3">
+            <p className="text-[12px] sm:text-[13px] text-[#6E94B0] font-medium leading-snug tracking-tight">
               Tijdens het samenstellen van de dakkapel is de dakkapel 360&deg; rond te draaien.
             </p>
             <button
               onClick={() => setShowRotateHint(false)}
               aria-label="Sluiten"
-              className="flex-shrink-0 -mt-0.5 -mr-1 h-6 w-6 rounded-full flex items-center justify-center text-[#666666] hover:text-[#1A1A1A] hover:bg-black/5 transition-colors focus:outline-none"
+              className="flex-shrink-0 -mt-0.5 -mr-1 h-6 w-6 rounded-full flex items-center justify-center text-[#5E84A0] hover:text-[#6E94B0] hover:bg-[#6E94B0]/8 transition-colors focus:outline-none"
             >
               <X size={15} strokeWidth={2.5} />
             </button>

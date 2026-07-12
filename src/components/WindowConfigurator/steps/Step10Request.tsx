@@ -146,14 +146,14 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
     }
   };
 
-  const inputCls = "h-[44px] rounded-[5px] border-black/10 outline-none focus-visible:ring-1 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-0 bg-[#FFFFFF] text-[#1A1A1A] text-[14px]";
+  const inputCls = "h-[44px] rounded-[5px] border-[#6E94B0]/25 outline-none focus-visible:ring-1 focus-visible:ring-[#6E94B0] focus-visible:ring-offset-0 bg-[#FFFFFF] text-[#6E94B0] text-[14px]";
 
   if (status === "success") {
     return (
       <div className="flex flex-col items-center justify-center h-[500px] gap-4 px-8 text-center">
         <div className="text-[48px]">✅</div>
-        <h2 className="text-[22px] font-black text-[#1A1A1A]">Aanvraag verstuurd!</h2>
-        <p className="text-[14px] text-[#666666]">We nemen zo snel mogelijk contact met u op.</p>
+        <h2 className="text-[22px] font-black text-[#6E94B0]">Aanvraag verstuurd!</h2>
+        <p className="text-[14px] text-[#5E84A0]">We nemen zo snel mogelijk contact met u op.</p>
       </div>
     );
   }
@@ -162,11 +162,11 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
     return (
       <div className="flex flex-col items-center justify-center h-[500px] gap-4 px-8 text-center">
         <div className="text-[48px]">❌</div>
-        <h2 className="text-[22px] font-black text-[#1A1A1A]">Verzenden mislukt</h2>
-        <p className="text-[14px] text-[#666666]">Er is iets misgegaan. Controleer uw internetverbinding en probeer het opnieuw.</p>
+        <h2 className="text-[22px] font-black text-[#6E94B0]">Verzenden mislukt</h2>
+        <p className="text-[14px] text-[#5E84A0]">Er is iets misgegaan. Controleer uw internetverbinding en probeer het opnieuw.</p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-4 px-6 py-2 rounded-full bg-[#1A1A1A] hover:bg-[#1A1A1A] text-white font-black text-[14px] transition-all"
+          className="mt-4 px-6 py-2 rounded-full bg-[#6E94B0] hover:bg-[#6E94B0] text-white font-black text-[14px] transition-all"
         >
           Opnieuw proberen
         </button>
@@ -181,14 +181,14 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
         <div className="flex flex-col gap-6">
           {/* Header Content (Now Scrolls) */}
           <div className="flex flex-col gap-1.5">
-            <h2 className="text-[22px] font-black text-[#1A1A1A] leading-tight tracking-tighter">
+            <h2 className="text-[22px] font-black text-[#6E94B0] leading-tight tracking-tighter">
               Offerte aanvraag
             </h2>
             <div className="flex flex-col gap-1">
-              <p className="text-[14px] leading-[1.3] text-[#666666] font-medium tracking-tight">
+              <p className="text-[14px] leading-[1.3] text-[#5E84A0] font-medium tracking-tight">
                 Rond uw aanvraag af en ontvang direct een overzicht van uw aanvraag.
               </p>
-              <p className="text-[14px] leading-[1.3] font-bold text-[#1A1A1A] tracking-tight">
+              <p className="text-[14px] leading-[1.3] font-bold text-[#6E94B0] tracking-tight">
                 Belangrijk: vul het adres in waar de dakkapel geplaatst wordt!
               </p>
             </div>
@@ -197,7 +197,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
           <div className="flex flex-col gap-3">
             {/* Aanvraag voor */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Aanvraag voor <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2 justify-start mt-0.5">
@@ -205,8 +205,8 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
                   variant="outline"
                   onClick={() => setRequestType("prive")}
                   className={`w-[84px] h-[38px] rounded-[5px] font-bold text-[14px] transition-all px-0 ${requestType === "prive"
-                      ? "bg-[#1A1A1A]/20 border-[#1A1A1A] text-[#1A1A1A] border-2 shadow-sm"
-                      : "bg-[#FFFFFF] text-[#1A1A1A] border-black/10 hover:bg-[#F0F0F0] border"
+                      ? "bg-[#6E94B0]/20 border-[#6E94B0] text-[#6E94B0] border-2 shadow-sm"
+                      : "bg-[#FFFFFF] text-[#6E94B0] border-[#6E94B0]/25 hover:bg-[#F0F0F0] border"
                     }`}
                 >
                   Privé
@@ -215,8 +215,8 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
                   variant="outline"
                   onClick={() => setRequestType("zakelijk")}
                   className={`w-[84px] h-[38px] rounded-[5px] font-bold text-[14px] transition-all px-0 ${requestType === "zakelijk"
-                      ? "bg-[#1A1A1A]/20 border-[#1A1A1A] text-[#1A1A1A] border-2 shadow-sm"
-                      : "bg-[#FFFFFF] text-[#1A1A1A] border-black/10 hover:bg-[#F0F0F0] border"
+                      ? "bg-[#6E94B0]/20 border-[#6E94B0] text-[#6E94B0] border-2 shadow-sm"
+                      : "bg-[#FFFFFF] text-[#6E94B0] border-[#6E94B0]/25 hover:bg-[#F0F0F0] border"
                     }`}
                 >
                   Zakelijk
@@ -226,7 +226,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* E-mail */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 E-mail <span className="text-red-500">*</span>
               </Label>
               <Input value={email} onChange={e => setEmail(e.target.value)} className={inputCls} />
@@ -235,14 +235,14 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
             {/* Aanhef & Achternaam */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <Label className="text-[14px] font-black text-[#1A1A1A]">
+                <Label className="text-[14px] font-black text-[#6E94B0]">
                   Aanhef <span className="text-red-500">*</span>
                 </Label>
                 <Select onValueChange={setAanhef}>
-                  <SelectTrigger className="h-[44px] rounded-[5px] border-black/10 outline-none focus:ring-1 focus:ring-[#1A1A1A] focus:ring-offset-0 bg-[#FFFFFF] px-3 text-[14px] text-[#1A1A1A]">
+                  <SelectTrigger className="h-[44px] rounded-[5px] border-[#6E94B0]/25 outline-none focus:ring-1 focus:ring-[#6E94B0] focus:ring-offset-0 bg-[#FFFFFF] px-3 text-[14px] text-[#6E94B0]">
                     <SelectValue placeholder="Selecteer..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#FFFFFF] border-black/10 text-[#1A1A1A]">
+                  <SelectContent className="bg-[#FFFFFF] border-[#6E94B0]/25 text-[#6E94B0]">
                     <SelectItem value="Dhr.">Dhr.</SelectItem>
                     <SelectItem value="Mevr.">Mevr.</SelectItem>
                     <SelectItem value="Familie">Familie</SelectItem>
@@ -250,7 +250,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
                 </Select>
               </div>
               <div className="flex flex-col gap-1">
-                <Label className="text-[14px] font-black text-[#1A1A1A]">
+                <Label className="text-[14px] font-black text-[#6E94B0]">
                   Achternaam <span className="text-red-500">*</span>
                 </Label>
                 <Input value={achternaam} onChange={e => setAchternaam(e.target.value)} className={inputCls} />
@@ -259,15 +259,15 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Telefoon */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Telefoon <span className="text-red-500">*</span>
               </Label>
               <Input value={telefoon} onChange={e => setTelefoon(e.target.value)} className={inputCls} />
             </div>
 
             {/* Plaatsingadres Section */}
-            <div className="mt-2 border-t border-black/10 pt-2.5">
-              <h3 className="text-[18px] font-black text-[#1A1A1A] tracking-tight">
+            <div className="mt-2 border-t border-[#6E94B0]/25 pt-2.5">
+              <h3 className="text-[18px] font-black text-[#6E94B0] tracking-tight">
                 Plaatsingadres
               </h3>
             </div>
@@ -275,13 +275,13 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
             {/* Postcode & Huisnummer */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <Label className="text-[14px] font-black text-[#1A1A1A]">
+                <Label className="text-[14px] font-black text-[#6E94B0]">
                   Postcode <span className="text-red-500">*</span>
                 </Label>
                 <Input value={postcode} onChange={e => setPostcode(e.target.value)} className={inputCls} />
               </div>
               <div className="flex flex-col gap-1">
-                <Label className="text-[14px] font-black text-[#1A1A1A]">
+                <Label className="text-[14px] font-black text-[#6E94B0]">
                   Huisnummer <span className="text-red-500">*</span>
                 </Label>
                 <Input value={huisnummer} onChange={e => setHuisnummer(e.target.value)} className={inputCls} />
@@ -290,7 +290,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Straat */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Straat <span className="text-red-500">*</span>
               </Label>
               <Input value={straat} onChange={e => setStraat(e.target.value)} className={inputCls} />
@@ -298,7 +298,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Plaats */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Plaats <span className="text-red-500">*</span>
               </Label>
               <Input value={plaats} onChange={e => setPlaats(e.target.value)} className={inputCls} />
@@ -306,7 +306,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Bouwjaar */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Bouwjaar
               </Label>
               <Input
@@ -319,7 +319,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Coupon code */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Coupon code
               </Label>
               <Input
@@ -332,14 +332,14 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
 
             {/* Opmerkingen */}
             <div className="flex flex-col gap-1">
-              <Label className="text-[14px] font-black text-[#1A1A1A]">
+              <Label className="text-[14px] font-black text-[#6E94B0]">
                 Opmerkingen
               </Label>
               <Textarea
                 value={opmerkingen}
                 onChange={e => setOpmerkingen(e.target.value)}
                 rows={5}
-                className="rounded-[5px] border-black/10 outline-none focus-visible:ring-1 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-0 bg-[#FFFFFF] text-[#1A1A1A] shadow-sm resize-none text-[14px]"
+                className="rounded-[5px] border-[#6E94B0]/25 outline-none focus-visible:ring-1 focus-visible:ring-[#6E94B0] focus-visible:ring-offset-0 bg-[#FFFFFF] text-[#6E94B0] shadow-sm resize-none text-[14px]"
               />
             </div>
 
@@ -348,7 +348,7 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
               <Button
                 onClick={handleSubmit}
                 disabled={status === "sending"}
-                className="w-full h-[48px] rounded-full bg-[#1A1A1A] hover:bg-[#1A1A1A] text-white font-black text-[15px] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
+                className="w-full h-[48px] rounded-full bg-[#6E94B0] hover:bg-[#6E94B0] text-white font-black text-[15px] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
               >
                 {status === "sending" ? "Versturen..." : "aanvraag versturen"}
               </Button>
@@ -358,10 +358,10 @@ export function Step10Request({ config, onChange, onPrev }: Step10Props) {
       </div>
 
       {/* Fixed Navigation Bar (Left Aligned) */}
-      <div className="flex-shrink-0 border-t border-black/10 bg-[#FFFFFF] backdrop-blur-sm">
+      <div className="flex-shrink-0 border-t border-[#6E94B0]/25 bg-[#FFFFFF] backdrop-blur-sm">
         <button
           onClick={onPrev}
-          className="w-full pl-5 py-2.5 hover:bg-[#F0F0F0]/50 flex items-center justify-start gap-2 text-[#444444] transition-all font-black"
+          className="w-full pl-5 py-2.5 hover:bg-[#F0F0F0]/50 flex items-center justify-start gap-2 text-[#4A7593] transition-all font-black"
         >
           <ChevronLeft size={16} strokeWidth={3} />
           <span className="text-[12px] uppercase tracking-wider">terug</span>

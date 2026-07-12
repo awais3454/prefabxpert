@@ -103,24 +103,24 @@ export function Step8Options({ config, onChange }: StepProps) {
               <div className={`
                 mt-0.5 w-[18px] h-[18px] rounded border-[1.5px] flex items-center justify-center transition-all duration-200 flex-shrink-0
                 ${option.enabled
-                  ? "bg-[#1A1A1A] border-[#1A1A1A]"
-                  : "bg-white/5 border-black/20 group-hover:border-black/30"}
+                  ? "bg-[#6E94B0] border-[#6E94B0]"
+                  : "bg-white/5 border-[#6E94B0]/40 group-hover:border-[#6E94B0]/60"}
               `}>
-                {option.enabled && <Check className="w-3.5 h-3.5 text-[#1A1A1A] stroke-[4]" />}
+                {option.enabled && <Check className="w-3.5 h-3.5 text-[#6E94B0] stroke-[4]" />}
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-0.5">
-                  <h3 className="text-[16px] font-black tracking-tight text-[#1A1A1A] leading-tight">
+                  <h3 className="text-[16px] font-black tracking-tight text-[#6E94B0] leading-tight">
                     {option.title}
                   </h3>
                   {option.priceLabel && (
-                    <span className="text-[12px] font-semibold text-[#1A1A1A] tracking-tight ml-2 flex-shrink-0">
+                    <span className="text-[12px] font-semibold text-[#6E94B0] tracking-tight ml-2 flex-shrink-0">
                       {option.priceLabel}
                     </span>
                   )}
                 </div>
-                <p className="text-[14px] leading-tight text-[#666666] font-medium opacity-90">
+                <p className="text-[14px] leading-tight text-[#5E84A0] font-medium opacity-90">
                   {option.description}
                 </p>
               </div>
@@ -129,7 +129,7 @@ export function Step8Options({ config, onChange }: StepProps) {
             {/* Rolluik (shutter) color picker — shown when Rolluik is enabled */}
             {option.id === "shutters" && option.enabled && (
               <div className="ml-7 mt-2 mb-3 flex flex-col gap-2">
-                <p className="text-[12px] font-semibold text-[#888888] tracking-tight">Kleur rolluik:</p>
+                <p className="text-[12px] font-semibold text-[#7BA0BC] tracking-tight">Kleur rolluik:</p>
                 <div className="flex flex-wrap gap-2">
                   {DAKKAPEL_COLORS.map((color) => {
                     const isSelected = (config.shutterColor ?? "").toLowerCase() === color.hex.toLowerCase();
@@ -139,7 +139,7 @@ export function Step8Options({ config, onChange }: StepProps) {
                         onClick={() => onChange({ ...config, shutterColor: color.hex })}
                         title={formatColorLabel(color)}
                         className={`w-[28px] h-[28px] rounded-full transition-all duration-200 flex items-center justify-center ${
-                          isSelected ? "scale-110 ring-2 ring-white ring-offset-2 ring-offset-[#FFFFFF]" : "hover:scale-105 border border-black/10"
+                          isSelected ? "scale-110 ring-2 ring-white ring-offset-2 ring-offset-[#FFFFFF]" : "hover:scale-105 border border-[#6E94B0]/25"
                         }`}
                         style={{ backgroundColor: color.hex }}
                       />

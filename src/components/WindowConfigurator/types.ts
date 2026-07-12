@@ -116,7 +116,7 @@ export const DEFAULT_CONFIG: WindowConfig = {
   pitchDeg: 35,
   roofCovering: "bitumen",
   roofConnection: "lood",
-  roofTileColor: "rood",
+  roofTileColor: "antraciet",
   pitchUnknown: false,
   shutterColor: "#F7F9EF",
   trimEnabled: false,

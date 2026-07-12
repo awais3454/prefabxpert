@@ -54,31 +54,31 @@ export function Step9Position({ config, onChange }: StepProps) {
               className={`
                 group cursor-pointer rounded-[12px] p-4 transition-all duration-300 relative
                 ${isSelected
-                  ? "bg-[#1A1A1A]/20 border-2 border-[#1A1A1A] shadow-lg z-10"
-                  : "bg-[#FFFFFF] border border-black/10 hover:border-black/20"}
+                  ? "bg-[#6E94B0]/20 border-2 border-[#6E94B0] shadow-lg z-10"
+                  : "bg-[#FFFFFF] border border-[#6E94B0]/25 hover:border-[#6E94B0]/40"}
               `}
             >
               <div className="flex flex-col">
                 <h3 className={`
                   text-[15px] font-black tracking-tight mb-1
-                  ${isSelected ? "text-[#1A1A1A]" : "text-[#1A1A1A]"}
+                  ${isSelected ? "text-[#6E94B0]" : "text-[#6E94B0]"}
                 `}>
                   {option.title}
                 </h3>
-                <p className="text-[13px] leading-relaxed text-[#666666] font-medium whitespace-normal">
+                <p className="text-[13px] leading-relaxed text-[#5E84A0] font-medium whitespace-normal">
                   {option.description}
                 </p>
 
                 {isSelected && (
-                  <div className="mt-3 pt-3 border-t border-black/10 flex items-center justify-start gap-3 font-black">
+                  <div className="mt-3 pt-3 border-t border-[#6E94B0]/25 flex items-center justify-start gap-3 font-black">
                     <div onClick={(e) => e.stopPropagation()}>
                       <Switch
                         checked={config.demountExisting}
                         onCheckedChange={(checked) => onChange({ ...config, demountExisting: checked })}
-                        className="data-[state=checked]:bg-[#1A1A1A] scale-90 origin-left border-2 border-[#1A1A1A] ring-1 ring-[#1A1A1A] ring-offset-2 ring-offset-[#FFFFFF]"
+                        className="data-[state=checked]:bg-[#6E94B0] scale-90 origin-left border-2 border-[#6E94B0] ring-1 ring-[#6E94B0] ring-offset-2 ring-offset-[#FFFFFF]"
                       />
                     </div>
-                    <span className="text-[12px] text-[#1A1A1A]">
+                    <span className="text-[12px] text-[#6E94B0]">
                       Demontage bestaande dakkapel
                     </span>
                   </div>
