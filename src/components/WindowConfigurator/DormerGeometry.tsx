@@ -95,6 +95,15 @@ function createWoodMaterial(
   })
 }
 
+/** One cladding-lines texture tile (4 planks) covers this many mm of wall height.
+ *  H=1700 → repeat 2 (same look as before), but now the repeat scales with each
+ *  strip's REAL height so planks never stretch when borstwering/hoogte changes. */
+const CLAD_TILE_MM = 850
+
+function claddingRepeatV(heightM: number) {
+  return Math.max(heightM / mm(CLAD_TILE_MM), 0.25)
+}
+
 // ─── Constants (mm) ────────────────────────────────────────────────────────
 const SIDE_W       = mm(190)   // side cheek wall thickness (Linkerwang/Rechterwang — fixed)
 const FRONT_T      = mm(140)   // front wall depth (Z)
@@ -263,6 +272,15 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   const isTraditional = styleType === 'traditional'
   const showCladding = isTraditional && claddingMaterial !== 'hpl'
 
+  // Strip heights — computed up-front so texture repeats can match REAL sizes.
+  // (borstwering increases the bottom strip: its texture repeat must grow with it)
+  const hasWin = !!(winW && winH)
+  const yBot   = hasWin ? (winYBottom ?? (H - (winH as number)) / 2) : 0
+  const botH   = hasWin ? yBot : H
+  const topH   = hasWin ? H - yBot - (winH as number) : 0
+
+  // Base canvas texture — NO fixed repeat here anymore; each strip gets its own
+  // clone with a repeat proportional to its real-world height (fixes stretching).
   const claddingLinesTex = useMemo(() => {
     if (!showCladding) return null
     const canvas = document.createElement('canvas')
@@ -279,28 +297,56 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(1, 2)
     return tex
   }, [showCladding])
 
-  const claddingFrontMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  // Per-strip texture clones — repeat.y scales with each strip's real height,
+  // so plank size stays constant no matter what Hoogte/Borstwering is set to.
+  const cladTexs = useMemo(() => {
+    const make = (h: number) => {
+      if (!claddingLinesTex || h <= 0) return null
+      const t = claddingLinesTex.clone()
+      t.repeat.set(1, claddingRepeatV(h))
+      t.needsUpdate = true
+      return t
+    }
+    return {
+      full:   make(H),                              // full wall (no window)
+      bottom: make(botH),                           // borstwering strip
+      top:    make(topH),                           // strip above window
+      side:   make(hasWin ? (winH as number) : 0),  // left/right/penant strips
+    }
+  }, [claddingLinesTex, H, botH, topH, winH, hasWin])
+
+  // One material per strip height (a single shared material can't hold
+  // different repeats), all animating to the same cladding color.
+  const cladFullRef   = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  const cladBottomRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  const cladTopRef    = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  const cladSideRef   = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
   useFrame(() => {
     if (!showCladding) return
-    const next = claddingLinesTex ?? null
-    claddingFrontMatRef.current.color.lerp(animatedColor, 0.25)
-    if (claddingFrontMatRef.current.map !== next) {
-      claddingFrontMatRef.current.map = next
-      claddingFrontMatRef.current.needsUpdate = true
+    const pairs: Array<[THREE.MeshStandardMaterial, THREE.Texture | null]> = [
+      [cladFullRef.current,   cladTexs.full],
+      [cladBottomRef.current, cladTexs.bottom],
+      [cladTopRef.current,    cladTexs.top],
+      [cladSideRef.current,   cladTexs.side],
+    ]
+    for (const [mat, tex] of pairs) {
+      mat.color.lerp(animatedColor, 0.25)
+      if (mat.map !== (tex ?? null)) {
+        mat.map = tex ?? null
+        mat.needsUpdate = true
+      }
     }
   })
 
-  const frontFaceMat = showCladding ? claddingFrontMatRef.current : outerMatRef.current
-
   if (!winW || !winH) {
     // Full wall without window - outside colored, inside white
+    const frontFaceMatFull = showCladding ? cladFullRef.current : outerMatRef.current
     const fullWallMats = [
       outerMatRef.current, outerMatRef.current, outerMatRef.current,
-      outerMatRef.current, frontFaceMat, innerMatRef.current,
+      outerMatRef.current, frontFaceMatFull, innerMatRef.current,
     ]
     return (
       <mesh position={[0, H / 2, 0]} castShadow material={fullWallMats}>
@@ -308,9 +354,6 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
       </mesh>
     )
   }
-  const yBot  = winYBottom ?? (H - winH) / 2
-  const botH  = yBot
-  const topH  = H - yBot - winH
   const sideW = (W - winW) / 2
   const winCY = yBot + winH / 2
 
@@ -320,12 +363,15 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   const o = outerMatRef.current  // outer/colored
   const i = innerMatRef.current  // inner/white
   const r = revealMat
-  const f = frontFaceMat         // front face — cladding for traditional, colored for kader
-  const bottomMats = [o, o, i, o, f, i]  // +Y (top of bottom strip) faces window - white
-  const topMats    = [o, o, o, i, f, i]  // -Y (bottom of top strip) faces window - white
-  const leftMats   = [i, o, o, o, f, i]  // +X (right of left strip) faces window - white
-  const rightMats  = [o, i, o, o, f, i]  // -X (left of right strip) faces window - white
-  const penantMats = [i, i, o, o, f, i]  // both sides face window openings - white
+  // Front face — cladding (per-strip repeat) for traditional, colored for kader
+  const fB = showCladding ? cladBottomRef.current : outerMatRef.current
+  const fT = showCladding ? cladTopRef.current    : outerMatRef.current
+  const fS = showCladding ? cladSideRef.current   : outerMatRef.current
+  const bottomMats = [o, o, i, o, fB, i]  // +Y (top of bottom strip) faces window - white
+  const topMats    = [o, o, o, i, fT, i]  // -Y (bottom of top strip) faces window - white
+  const leftMats   = [i, o, o, o, fS, i]  // +X (right of left strip) faces window - white
+  const rightMats  = [o, i, o, o, fS, i]  // -X (left of right strip) faces window - white
+  const penantMats = [i, i, o, o, fS, i]  // both sides face window openings - white
 
   // Build penant (divider) strips between window openings
   const penants: JSX.Element[] = []
@@ -952,9 +998,11 @@ export function SideCheek({
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(1, 2)
+    // Repeat scales with the cheek's REAL height (UV v spans 0‥1 over H) so
+    // plank size stays constant and matches the front wall when H changes.
+    tex.repeat.set(1, claddingRepeatV(H))
     return tex
-  }, [claddingMaterial, isKader])
+  }, [claddingMaterial, isKader, H])
 
   const woodCol = useTexture('/images/window_wood/COL.jpg')
   const woodRgh = useTexture('/images/window_wood/ROUGH.jpg')
