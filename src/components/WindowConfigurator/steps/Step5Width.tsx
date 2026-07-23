@@ -66,7 +66,7 @@ function Stepper({
           <Minus size={14} strokeWidth={3} />
         </button>
         <div className="text-[16px] font-black text-[#6E94B0] min-w-[70px] text-center select-none tracking-tighter">
-          {Math.round(value / 10)} {unit}
+          {Math.round(value)} {unit}
         </div>
         <button
           onMouseDown={() => startHold(onInc)}
@@ -115,7 +115,7 @@ export function Step5Width({ config, onChange }: StepProps) {
     rows.push(
       <Stepper key={`koz-${i}`}
         label={copies > 1 ? `Kozijn ${i + 1}` : 'Kozijn'}
-        value={w} unit="cm" min={KOZ_MIN} max={KOZ_MAX} step={KOZ_STEP} bold
+        value={w} unit="mm" min={KOZ_MIN} max={KOZ_MAX} step={KOZ_STEP} bold
         onDec={() => updateWidth(i, Math.max(KOZ_MIN, w - KOZ_STEP))}
         onInc={() => updateWidth(i, Math.min(KOZ_MAX, w + KOZ_STEP))}
       />
@@ -125,7 +125,7 @@ export function Step5Width({ config, onChange }: StepProps) {
       rows.push(
         <Stepper key={`pen-${i}`}
           label="Penant"
-          value={g} unit="cm" min={PEN_MIN} max={PEN_MAX} step={PEN_STEP}
+          value={g} unit="mm" min={PEN_MIN} max={PEN_MAX} step={PEN_STEP}
           onDec={() => updateSpacing(i, Math.max(PEN_MIN, g - PEN_STEP))}
           onInc={() => updateSpacing(i, Math.min(PEN_MAX, g + PEN_STEP))}
         />
@@ -144,7 +144,7 @@ export function Step5Width({ config, onChange }: StepProps) {
         <div className="flex items-center gap-8">
           <div className="w-[42px]" />
           <div className="text-[15px] font-normal text-[#5E84A0] min-w-[70px] text-center select-none tracking-tight">
-            {SIDE_CHEEK_TOTAL / 10} cm
+            {SIDE_CHEEK_TOTAL} mm
           </div>
           <div className="w-[42px]" />
         </div>
@@ -156,7 +156,7 @@ export function Step5Width({ config, onChange }: StepProps) {
         <div className="flex items-center gap-8">
           <div className="w-[42px]" />
           <div className="text-[16px] font-black text-[#6E94B0] min-w-[70px] text-center select-none tracking-tighter">
-            {Math.round(totalWidth / 10)} cm
+            {Math.round(totalWidth)} mm
           </div>
           <div className="w-[42px]" />
         </div>

@@ -12,7 +12,7 @@ export function WindowConfigurator() {
   return (
     <div className="app-container flex flex-col h-screen w-screen bg-background overflow-hidden sm:relative">
       {/* 3D Scene — top half on mobile, full screen on desktop */}
-      <div className="scene-container h-[40vh] sm:absolute sm:inset-0 sm:h-full w-full relative overflow-hidden z-0 flex-shrink-0">
+      <div className="scene-container h-[38vh] sm:absolute sm:inset-0 sm:h-full w-full relative overflow-hidden z-0 flex-shrink-0">
         <Scene config={config} />
         <DimensionsDisplay config={config} />
       </div>
@@ -36,7 +36,7 @@ export function WindowConfigurator() {
       )}
 
       {/* Control Panel — bottom half on mobile, floating on desktop */}
-      <div className="panel-container h-[60vh] sm:h-auto sm:absolute sm:inset-0 w-full z-10 sm:pointer-events-none flex-shrink-0">
+      <div className="panel-container h-[65vh] sm:h-auto sm:absolute sm:inset-0 w-full z-10 sm:pointer-events-none flex-shrink-0">
         <ControlPanel config={config} onChange={setConfig} />
       </div>
     </div>

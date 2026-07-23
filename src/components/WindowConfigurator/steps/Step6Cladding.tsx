@@ -7,15 +7,14 @@ interface StepProps {
 export function Step6Cladding({ config, onChange }: StepProps) {
   const options = [
     {
-      id: "rondkantpanelen",
-      title: "Keralit",
-      description: "Keralit is een duurzaam en onderhoudsarm merk voor kunststof gevel- en dakrandpanelen.",
+      id: "hpl",
+      title: "Gladde voorzijde",
+      description: "Een strakke, volledig gladde voorzijde zonder rabatprofiel. Zorgt voor een moderne en minimalistische uitstraling.",
     },
     {
-      id: "hpl",
-      title: "Hpl (high pressure laminate)",
-      description: "Hpl is een kwalitatief materiaal met een gladde afwerking, voor een minimalistische uitstraling. Dit materiaal is extreem duurzaam en onderhoudsarm.",
-      priceLabel: "+ €450",
+      id: "rondkantpanelen",
+      title: "Rabatprofiel",
+      description: "De voorzijde krijgt dezelfde rabatstrepen als de zijwangen van de dakkapel, voor een traditionele, samenhangende uitstraling.",
     }
   ];
 

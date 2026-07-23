@@ -7,7 +7,7 @@ interface StepProps {
 }
 
 const CONFIG = {
-  MIN: 20,
+  MIN: 15,
   MAX: 65,
   STEP: 1
 };
@@ -34,6 +34,25 @@ export function Step2Pitch({ config, onChange }: StepProps) {
       <p className="text-[12px] text-[#6E94B0] font-medium mb-2 pt-5 leading-tight">
         Gebruik deze ontwerp tool via telefoon om de graden te meten.
       </p>
+
+      <div className="flex items-center justify-center gap-4 mb-1">
+        <a
+          href="https://play.google.com/store/apps/details?id=com.wako.level&hl=nl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[12px] font-black text-[#6E94B0] underline underline-offset-2 hover:opacity-70 transition-opacity"
+        >
+          Android app
+        </a>
+        <a
+          href="https://apps.apple.com/nl/app/gradenboog-smart/id1076530001"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[12px] font-black text-[#6E94B0] underline underline-offset-2 hover:opacity-70 transition-opacity"
+        >
+          iPhone app
+        </a>
+      </div>
 
       {/* Stepper Logic (Plus/Minus Options Only - Exactly like Step 4) */}
       <div className="flex items-center justify-center gap-8 pt-2">

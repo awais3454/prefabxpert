@@ -96,7 +96,7 @@ function createWoodMaterial(
 }
 
 // ─── Constants (mm) ────────────────────────────────────────────────────────
-const SIDE_W       = mm(240)   // side cheek wall thickness
+const SIDE_W       = mm(190)   // side cheek wall thickness (Linkerwang/Rechterwang — fixed)
 const FRONT_T      = mm(140)   // front wall depth (Z)
 const FASCIA_H     = mm(150)   // fascia board height
 const FASCIA_T     = mm(30)    // fascia board thickness
@@ -234,16 +234,18 @@ export function RoofTileCube({ position, size = [1, 1, 1] }: {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penantWs }: {
+export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penantWs, styleType, claddingMaterial }: {
   W: number; H: number; color: string;
   winW?: number; winH?: number; winYBottom?: number;
   subWinWs?: number[]; penantWs?: number[];
+  styleType?: 'traditional' | 'kader';
+  claddingMaterial?: 'rondkantpanelen' | 'hpl';
 }) {
   const animatedColor = useAnimatedColor(color, 0.25)
   // Outer material (colored) - front and sides
-  const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.08, envMapIntensity: 0.6, color }))
+  const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, color }))
   // Inner material (always white) - back face
-  const innerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.08, envMapIntensity: 0.6, color: '#FFFFFF' }))
+  const innerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, color: '#FFFFFF' }))
   useFrame(() => { outerMatRef.current.color.lerp(animatedColor, 0.25) })
 
   const woodCol = useTexture('/images/window_wood/COL.jpg')
@@ -256,11 +258,49 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
     return new THREE.MeshStandardMaterial({ map: wc, roughnessMap: wr, normalMap: wn, roughness: 0.75, metalness: 0.0 })
   }, [woodCol, woodRgh, woodNrm])
 
+  // For the TRADITIONAL model the front face uses the same horizontal-line cladding
+  // texture as the side cheeks, so front matches the sides.
+  const isTraditional = styleType === 'traditional'
+  const showCladding = isTraditional && claddingMaterial !== 'hpl'
+
+  const claddingLinesTex = useMemo(() => {
+    if (!showCladding) return null
+    const canvas = document.createElement('canvas')
+    canvas.width = 256; canvas.height = 256
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#c8c8c8'
+      ctx.fillRect(0, 0, 256, 256)
+      for (let y = 0; y <= 256; y += 64) {
+        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+        ctx.lineWidth = 6
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+      }
+    }
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(1, 2)
+    return tex
+  }, [showCladding])
+
+  const claddingFrontMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  useFrame(() => {
+    if (!showCladding) return
+    const next = claddingLinesTex ?? null
+    claddingFrontMatRef.current.color.lerp(animatedColor, 0.25)
+    if (claddingFrontMatRef.current.map !== next) {
+      claddingFrontMatRef.current.map = next
+      claddingFrontMatRef.current.needsUpdate = true
+    }
+  })
+
+  const frontFaceMat = showCladding ? claddingFrontMatRef.current : outerMatRef.current
+
   if (!winW || !winH) {
     // Full wall without window - outside colored, inside white
     const fullWallMats = [
       outerMatRef.current, outerMatRef.current, outerMatRef.current,
-      outerMatRef.current, outerMatRef.current, innerMatRef.current,
+      outerMatRef.current, frontFaceMat, innerMatRef.current,
     ]
     return (
       <mesh position={[0, H / 2, 0]} castShadow material={fullWallMats}>
@@ -280,11 +320,12 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   const o = outerMatRef.current  // outer/colored
   const i = innerMatRef.current  // inner/white
   const r = revealMat
-  const bottomMats = [o, o, i, o, o, i]  // +Y (top of bottom strip) faces window - white
-  const topMats    = [o, o, o, i, o, i]  // -Y (bottom of top strip) faces window - white
-  const leftMats   = [i, o, o, o, o, i]  // +X (right of left strip) faces window - white
-  const rightMats  = [o, i, o, o, o, i]  // -X (left of right strip) faces window - white
-  const penantMats = [i, i, o, o, o, i]  // both sides face window openings - white
+  const f = frontFaceMat         // front face — cladding for traditional, colored for kader
+  const bottomMats = [o, o, i, o, f, i]  // +Y (top of bottom strip) faces window - white
+  const topMats    = [o, o, o, i, f, i]  // -Y (bottom of top strip) faces window - white
+  const leftMats   = [i, o, o, o, f, i]  // +X (right of left strip) faces window - white
+  const rightMats  = [o, i, o, o, f, i]  // -X (left of right strip) faces window - white
+  const penantMats = [i, i, o, o, f, i]  // both sides face window openings - white
 
   // Build penant (divider) strips between window openings
   const penants: JSX.Element[] = []
@@ -555,6 +596,48 @@ export function WindowFrame({
   )
 }
 
+/** Closed panel — same outer frame/border as a window opening, but a solid infill
+ *  instead of glass + sash. Used when a kozijn is set to "Gesloten paneel". */
+export function ClosedPanel({ W, H, frameColor, panelColor }: { W: number; H: number; frameColor: string; panelColor: string }) {
+  const animatedFrameColor = useAnimatedColor(frameColor, 0.25)
+  const animatedPanelColor = useAnimatedColor(panelColor, 0.25)
+
+  const OUTER_T = mm(90)
+  const OUTER_D = mm(80)
+  const innerW  = W - OUTER_T * 2
+  const innerH  = H - OUTER_T * 2
+  const zFront  = FRONT_T / 2 + 0.001
+
+  const frameMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.25, metalness: 0.08, color: frameColor }))
+  const panelMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.02, color: panelColor }))
+  useFrame(() => {
+    frameMatRef.current.color.lerp(animatedFrameColor, 0.25)
+    panelMatRef.current.color.lerp(animatedPanelColor, 0.25)
+  })
+
+  return (
+    <group position={[0, H / 2, zFront - OUTER_D / 2]}>
+      {/* Outer frame border — same look as a window opening */}
+      <mesh position={[0, H / 2 - OUTER_T / 2, 0]} material={frameMatRef.current}>
+        <boxGeometry args={[W, OUTER_T, OUTER_D]} />
+      </mesh>
+      <mesh position={[0, -H / 2 + OUTER_T / 2, 0]} material={frameMatRef.current}>
+        <boxGeometry args={[W, OUTER_T, OUTER_D]} />
+      </mesh>
+      <mesh position={[-W / 2 + OUTER_T / 2, 0, 0]} material={frameMatRef.current}>
+        <boxGeometry args={[OUTER_T, innerH, OUTER_D]} />
+      </mesh>
+      <mesh position={[W / 2 - OUTER_T / 2, 0, 0]} material={frameMatRef.current}>
+        <boxGeometry args={[OUTER_T, innerH, OUTER_D]} />
+      </mesh>
+      {/* Solid infill panel instead of glass */}
+      <mesh position={[0, 0, 0]} material={panelMatRef.current}>
+        <boxGeometry args={[innerW, innerH, mm(20)]} />
+      </mesh>
+    </group>
+  )
+}
+
 export function FlatRoof({ W, H, depth, color, isKader = false }: { W: number; H: number; depth: number; color: string; isKader?: boolean }) {
   const targetColorRef = useRef(new THREE.Color(color))
   // Front face material (colored) — only the visible front strip changes color
@@ -584,10 +667,10 @@ export function FlatRoof({ W, H, depth, color, isKader = false }: { W: number; H
 
   return (
     <group position={[0, H, 0]}>
-      {/* Slab box — only front face colored, top/sides grey, bottom white */}
+      {/* Slab box — front, left and right faces colored, top grey, bottom white */}
       <mesh position={[0, ROOF_SLAB_T / 2, slabCtrZ]} castShadow material={[
-        topSideMatRef.current, // 0: right face (grey)
-        topSideMatRef.current, // 1: left face (grey)
+        frontMatRef.current,   // 0: right face (colored)
+        frontMatRef.current,   // 1: left face (colored)
         topSideMatRef.current, // 2: top face (grey)
         innerMatRef.current,   // 3: bottom face (white)
         frontMatRef.current,   // 4: front face (colored)
@@ -814,7 +897,7 @@ function AnimatedBox({ position, size, color, roughness = 0.4, metalness = 0.05 
   )
 }
 
-/** Fascia board on top of flat slab — only front face follows color, rest stays grey */
+/** Fascia board on top of flat slab — front, left and right faces follow the color */
 function FasciaBoard({ W, H, depth, color, isKader = false }: {
   W: number; H: number; depth: number; color: string; isKader?: boolean
 }) {
@@ -832,8 +915,8 @@ function FasciaBoard({ W, H, depth, color, isKader = false }: {
       position={[0, H + ROOF_SLAB_T + mm(20), (ROOF_OVERHANG - depth) / 2]}
       castShadow
       material={[
-        greyMatRef.current,  // 0: right face
-        greyMatRef.current,  // 1: left face
+        frontMatRef.current, // 0: right face (colored)
+        frontMatRef.current, // 1: left face (colored)
         greyMatRef.current,  // 2: top face
         greyMatRef.current,  // 3: bottom face
         frontMatRef.current, // 4: front face (colored)
@@ -862,8 +945,8 @@ export function SideCheek({
       ctx.fillStyle = '#c8c8c8'
       ctx.fillRect(0, 0, 256, 256)
       for (let y = 0; y <= 256; y += 64) {
-        ctx.strokeStyle = 'rgba(30,30,30,0.5)'
-        ctx.lineWidth = 5
+        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+        ctx.lineWidth = 6
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
       }
     }
@@ -883,8 +966,8 @@ export function SideCheek({
     return createWoodMaterial(u, v, woodCol, woodRgh, woodNrm)
   }, [woodCol, woodRgh, woodNrm, H, depth])
 
-  const bodyMatRef  = useRef(new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.04, side: THREE.DoubleSide }))
-  const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.04, side: THREE.DoubleSide }))
+  const bodyMatRef  = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, side: THREE.DoubleSide }))
+  const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, side: THREE.DoubleSide }))
 
   useFrame(() => {
     const next = linesTex ?? null
@@ -954,7 +1037,7 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
       t.needsUpdate = true
       return t
     }
-    const isRed = !!roofTileColor && roofTileColor.toLowerCase() !== '#ffffff'
+    const isRed = roofTileColor === '#EC8A4A'
     const mat = new THREE.MeshStandardMaterial({
       map:              repeat(tileCol.clone(), uRepeat, vRepeat),
       roughnessMap:     repeat(tileRgh.clone(), uRepeat, vRepeat),
@@ -962,15 +1045,14 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
       normalScale:      new THREE.Vector2(2, 2),
       aoMap:            repeat(tileAO.clone(), uRepeat, vRepeat),
       displacementMap:  repeat(tileDsp.clone(), uRepeat, vRepeat),
-      displacementScale: 0.05,
+      displacementScale: 0.09,
       roughness:    0.7,
       metalness:    0.4,
       side:         THREE.FrontSide,
-      // Tint the tile texture: red for "Rood", neutral for "Antraciet"
+      // Tint the tile texture: red for "Rood", neutral (white = untinted) for "Antraciet"
       color: new THREE.Color(roofTileColor || '#ffffff'),
     })
-    // For the red roof, the base tile texture is very dark, so multiply-tint alone
-    // stays muddy. Add an emissive glow (which ADDS light) to lift it into a bright terracotta.
+    // For the red roof, the base tile texture is light, so tint + emissive gives terracotta.
     if (isRed) {
       mat.emissive = new THREE.Color('#D06A2E')
       mat.emissiveIntensity = 0.46
@@ -987,8 +1069,9 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
   // Single plane with hole where dormer is located
   const fullPlane = useMemo(() => {
     const tan = Math.tan(pitchRad)
-    const DROP = mm(5)
-    const segs = 64
+    const DROP = mm(-5)
+    // const segs = 64
+    const segs = 128
     const xStep = (hw * 2) / segs
     const zStep = (FORWARD + BACK) / segs
 
@@ -1261,6 +1344,8 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
     insectScreenEnabled,
     styleType,
     claddingMaterial,
+    kozijnTypes,
+    kozijnSashTypes,
   } = config
 
   const pitchRad = Math.max((pitchDeg * Math.PI) / 180, 0.01)
@@ -1298,7 +1383,9 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
 
   const halfW = W / 2
 
-  // Roof tile color: "rood" tints the tile texture red, "antraciet" keeps it neutral (dark)
+  // Roof tile color: "rood" tints the tile texture red, "antraciet" tints it dark
+  // (the base texture is light grey, so an explicit dark tint keeps the roof dark
+  // and prevents light patches showing through — the "snow" effect at steep angles)
   const roofTileTint = config.roofTileColor === 'antraciet' ? '#ffffff' : '#EC8A4A'
 
   return (
@@ -1314,35 +1401,50 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
         W={styleType === 'kader' ? W + SIDE_W * 2 + mm(280) : W + SIDE_W * 2 - mm(4)} H={H} color={frontColor}
         winW={winW} winH={winH} winYBottom={winYBottom}
         subWinWs={subWinWs} penantWs={penantWs}
+        styleType={styleType}
+        claddingMaterial={claddingMaterial}
       />
 
       {/* ── Window frames + glass + roller shutters (one per paneell) ── */}
       <group position={[0, winYBottom, 0]}>
         {panelXs.map((xOff, i) => {
-          const copyPanelCount = rawWidths[i] > 4100 ? 5 : rawWidths[i] > 3450 ? 4 : rawWidths[i] > 2100 ? 3 : rawWidths[i] <= 1100 ? 1 : 2
+          const manualPanelCount = config.kozijnPanelCounts?.[i]
+          const copyPanelCount = manualPanelCount ?? 1
           const wWidth = subWinWs[i]
+          const isGesloten = kozijnTypes?.[i] === 'gesloten'
           return (
             <group key={i} position={[xOff, 0, 0]}>
-              <WindowFrame
-                W={wWidth}
-                H={winH}
-                frameColor={frameColor}
-                sashColor={sashColor}
-                panelCount={copyPanelCount}
-                hideInnerSash={false}
-                insectScreenEnabled={insectScreenEnabled}
-                ventGrillEnabled={config.ventGrillEnabled}
-              />
-              {/* Roller shutter with animated scale from top */}
-              {shutterEnabled && (
-                <RollerShutter
+              {isGesloten ? (
+                <ClosedPanel
                   W={wWidth}
-                  winH={winH}
-                  roofH={H - winYBottom}
-                  color={config.shutterColor || frameColor}
-                  guideColor={frameColor}
-                  openPercent={shutterOpen}
+                  H={winH}
+                  frameColor={frameColor}
+                  panelColor={config.frontColor || frameColor}
                 />
+              ) : (
+                <>
+                  <WindowFrame
+                    W={wWidth}
+                    H={winH}
+                    frameColor={frameColor}
+                    sashColor={sashColor}
+                    panelCount={copyPanelCount}
+                    hideInnerSash={kozijnSashTypes?.[i] === 'vast'}
+                    insectScreenEnabled={insectScreenEnabled}
+                    ventGrillEnabled={config.ventGrillEnabled}
+                  />
+                  {/* Roller shutter with animated scale from top */}
+                  {shutterEnabled && (
+                    <RollerShutter
+                      W={wWidth}
+                      winH={winH}
+                      roofH={H - winYBottom}
+                      color={config.shutterColor || frameColor}
+                      guideColor={frameColor}
+                      openPercent={shutterOpen}
+                    />
+                  )}
+                </>
               )}
             </group>
           )

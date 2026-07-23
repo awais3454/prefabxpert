@@ -312,6 +312,7 @@ export function Scene({ config }: SceneProps) {
         shadow-camera-top={14}
         shadow-camera-bottom={-14}
         shadow-bias={-0.0001}
+        shadow-normalBias={0.03}
       />
       {/* Fill light — soft warm from upper-left */}
       <directionalLight position={[-6, 5, -2]} intensity={0.2} color="#fff0e8" />

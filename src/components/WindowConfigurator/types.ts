@@ -8,6 +8,9 @@ export interface WindowConfig {
   // Base Dimensions
   windowWidth: number;   // mm — single/default kozijn width
   windowWidths: number[]; // mm — per-copy kozijn widths (length = windowCopies)
+  kozijnTypes?: ("kozijn" | "gesloten")[]; // per-copy: normal window or closed panel (length = windowCopies)
+  kozijnPanelCounts?: (number | null)[]; // per-copy raamindeling override; null/undefined = automatic based on width
+  kozijnSashTypes?: ("draaikiep" | "vast")[]; // per-copy: draai-/kiepraam (tilt) or vast raam (fixed only)
   windowHeight: number;  // mm
   lintelLevel: number;   // mm — subtracted from windowHeight
   panelCount: 1 | 2 | 3 | 4 | 5;
@@ -83,6 +86,7 @@ export interface WindowConfig {
   // Step 10: Position
   dormerPosition: "voorzijde" | "achterzijde" | "linkerkant" | "rechterkant";
   demountExisting: boolean;
+  vergunningService?: boolean;
   // Normalized dormer placement on the roof plane (0 = left/bottom edge, 1 = right/top edge)
   dormerOffsetX: number; // 0–1, horizontal position along roof ridge
   dormerOffsetY: number; // 0–1, vertical position along roof slope
@@ -97,12 +101,15 @@ export const WALL_THICKNESS = FRONT_WALL_THICKNESS;
 export const DEFAULT_CONFIG: WindowConfig = {
   currentStep: 1,
   windowWidth: 2000,
-  windowWidths: [2000],
+  windowWidths: [2000, 2000],
+  kozijnTypes: ["kozijn", "kozijn"],
+  kozijnPanelCounts: [null, null],
+  kozijnSashTypes: ["draaikiep", "draaikiep"],
   windowHeight: 1500,
   lintelLevel: 0,
   panelCount: 1,
-  windowCopies: 1,
-  spacings: [200, 200, 200, 200],
+  windowCopies: 2,
+  spacings: [300],
   wallSideOffset: 0,
   styleType: "traditional",
   claddingMaterial: "rondkantpanelen",
@@ -157,6 +164,7 @@ export const DEFAULT_CONFIG: WindowConfig = {
   // Step 10: Position
   dormerPosition: "achterzijde",
   demountExisting: false,
+  vergunningService: false,
   dormerOffsetX: 0.5,
   dormerOffsetY: 0.5,
 };

@@ -33,8 +33,8 @@ export function DimensionsDisplay({ config }: DimensionsDisplayProps) {
   const totalSpacing = panelSpacings.reduce((s, g) => s + g, 0);
   const totalWidth = totalFrameWidth + totalSpacing + SIDE_CHEEK_TOTAL;
   
-  // Format cm from mm
-  const formatCm = (mm: number) => Math.round(mm / 10);
+  // Display in millimeters (data is already stored in mm)
+  const formatMm = (mm: number) => Math.round(mm);
 
   return (
     <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 flex flex-col items-end gap-1.5 sm:gap-2">
@@ -63,7 +63,7 @@ export function DimensionsDisplay({ config }: DimensionsDisplayProps) {
                   {copies > 1 ? `Kozijn ${i + 1}` : 'Kozijn'}
                 </span>
                 <span className="text-[11px] sm:text-[14px] font-black text-[#6E94B0] whitespace-nowrap">
-                  {formatCm(width)} cm
+                  {formatMm(width)} mm
                 </span>
               </div>
             ))}
@@ -75,7 +75,7 @@ export function DimensionsDisplay({ config }: DimensionsDisplayProps) {
                   Penant {i + 1}
                 </span>
                 <span className="text-[11px] sm:text-[14px] font-black text-[#6E94B0] whitespace-nowrap">
-                  {formatCm(spacing)} cm
+                  {formatMm(spacing)} mm
                 </span>
               </div>
             ))}
@@ -84,7 +84,7 @@ export function DimensionsDisplay({ config }: DimensionsDisplayProps) {
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] sm:text-[12px] font-semibold text-[#4A7593] truncate">2x zijwang</span>
               <span className="text-[11px] sm:text-[14px] font-black text-[#6E94B0] whitespace-nowrap">
-                {formatCm(SIDE_CHEEK_TOTAL)} cm
+                {formatMm(SIDE_CHEEK_TOTAL)} mm
               </span>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function DimensionsDisplay({ config }: DimensionsDisplayProps) {
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] sm:text-[13px] font-black text-[#6E94B0] uppercase tracking-tight truncate">Totaal</span>
               <span className="text-[14px] sm:text-[18px] font-black text-[#6E94B0] whitespace-nowrap">
-                {formatCm(totalWidth)} cm
+                {formatMm(totalWidth)} mm
               </span>
             </div>
           </div>

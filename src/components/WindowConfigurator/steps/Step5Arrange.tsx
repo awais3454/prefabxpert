@@ -92,7 +92,7 @@ export function Step5Arrange({ config, onChange }: StepProps) {
           <div className="flex items-center gap-2 mt-1">
             <Maximize2 size={14} className="text-[#6E94B0]" />
             <span className="text-[14px] sm:text-[16px] font-black text-[#6E94B0]">
-              {Math.round(widths[selectedFrame] / 10)} cm
+              {Math.round(widths[selectedFrame])} mm
             </span>
           </div>
         </div>
@@ -113,13 +113,13 @@ export function Step5Arrange({ config, onChange }: StepProps) {
             Breedte Kozijn {selectedFrame + 1}
           </span>
           <span className="text-[18px] font-black text-[#6E94B0]">
-            {Math.round(widths[selectedFrame] / 10)} cm
+            {Math.round(widths[selectedFrame])} mm
           </span>
         </div>
         
         {/* Slider */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-[#6E94B0]">{KOZ_MIN / 10}cm</span>
+          <span className="text-[11px] text-[#6E94B0]">{KOZ_MIN} mm</span>
           <input
             type="range"
             min={KOZ_MIN}
@@ -129,7 +129,7 @@ export function Step5Arrange({ config, onChange }: StepProps) {
             onChange={(e) => updateFrameWidth(selectedFrame, parseInt(e.target.value))}
             className="flex-1 h-2 bg-[#E0E0E0] rounded-full appearance-none cursor-pointer accent-[#6E94B0]"
           />
-          <span className="text-[11px] text-[#6E94B0]">{KOZ_MAX / 10}cm</span>
+          <span className="text-[11px] text-[#6E94B0]">{KOZ_MAX} mm</span>
         </div>
         
         {/* Quick Adjust Buttons */}
@@ -139,14 +139,14 @@ export function Step5Arrange({ config, onChange }: StepProps) {
             disabled={widths[selectedFrame] <= KOZ_MIN}
             className="px-3 py-2 rounded-lg bg-[#F0F0F0] text-[#6E94B0] text-[12px] font-semibold hover:bg-[#F0F0F0] disabled:opacity-30 transition-all"
           >
-            -{KOZ_STEP / 10}cm
+            -{KOZ_STEP} mm
           </button>
           <button
             onClick={() => updateFrameWidth(selectedFrame, widths[selectedFrame] + KOZ_STEP)}
             disabled={widths[selectedFrame] >= KOZ_MAX}
             className="px-3 py-2 rounded-lg bg-[#F0F0F0] text-[#6E94B0] text-[12px] font-semibold hover:bg-[#F0F0F0] disabled:opacity-30 transition-all"
           >
-            +{KOZ_STEP / 10}cm
+            +{KOZ_STEP} mm
           </button>
         </div>
       </div>
@@ -167,7 +167,7 @@ export function Step5Arrange({ config, onChange }: StepProps) {
                   : 'bg-[#F0F0F0] text-[#6E94B0] hover:bg-[#F0F0F0]'
               }`}
             >
-              K{i + 1}: {Math.round(width / 10)}cm
+              K{i + 1}: {Math.round(width)} mm
             </button>
           ))}
         </div>

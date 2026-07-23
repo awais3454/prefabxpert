@@ -24,9 +24,14 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
   return (
     <div className="flex flex-col flex-1 px-10 pt-2 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 step-3-dimensions-container overflow-hidden text-center">
 
+      {/* Main title */}
+      <h3 className="step-title-bold text-[16px] text-black tracking-tight text-center mb-3">
+        Complete dakkapel
+      </h3>
+
       {/* Hoogte Section */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[17px] font-black text-[#6E94B0] tracking-tight">Hoogte</span>
+        <span className="text-[15px] font-black text-[#6E94B0] tracking-tight">Hoogte</span>
         <div className="flex items-center gap-8">
           <button
             onClick={() => updateHeight(Math.max(CONFIG.HEIGHT.MIN, h - CONFIG.HEIGHT.STEP))}
@@ -36,7 +41,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
             <Minus size={14} strokeWidth={3} />
           </button>
           <div className="text-[16px] font-black text-[#6E94B0] min-w-[70px] text-center select-none tracking-tight">
-            {Math.round(h / 10)} cm
+            {Math.round(h)} mm
           </div>
           <button
             onClick={() => updateHeight(Math.min(CONFIG.HEIGHT.MAX, h + CONFIG.HEIGHT.STEP))}
@@ -52,14 +57,14 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
       {h >= 1750 && (
         <div className="mt-3 p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl">
           <p className="text-[12px] font-semibold text-amber-400 text-center leading-relaxed">
-            Let op: Hoogte van 175 cm en hoger kan vergunningsplichtig zijn. Neem contact op voor advies.
+            Let op: Hoogte van 1750 mm en hoger kan vergunningsplichtig zijn. Neem contact op voor advies.
           </p>
         </div>
       )}
 
       {/* Borstwering Section Header */}
       <div className="w-full flex justify-center mb-1 mt-4">
-        <h3 className="text-[17px] font-black text-[#6E94B0] tracking-tight text-center">Borstwering</h3>
+        <h3 className="text-[15px] font-black text-[#6E94B0] tracking-tight text-center">Borstwering</h3>
       </div>
 
       {/* Hoogte Borstwering Section */}
@@ -74,7 +79,7 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
             <Minus size={14} strokeWidth={3} />
           </button>
           <div className="text-[16px] font-black text-[#6E94B0] min-w-[70px] text-center select-none tracking-tight">
-            {Math.round(p / 10)} cm
+            {Math.round(p)} mm
           </div>
           <button
             onClick={() => updateParapet(Math.min(CONFIG.PARAPET.MAX, p + CONFIG.PARAPET.STEP))}

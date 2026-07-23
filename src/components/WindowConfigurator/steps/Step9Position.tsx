@@ -70,17 +70,33 @@ export function Step9Position({ config, onChange }: StepProps) {
                 </p>
 
                 {isSelected && (
-                  <div className="mt-3 pt-3 border-t border-[#6E94B0]/25 flex items-center justify-start gap-3 font-black">
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Switch
-                        checked={config.demountExisting}
-                        onCheckedChange={(checked) => onChange({ ...config, demountExisting: checked })}
-                        className="data-[state=checked]:bg-[#6E94B0] scale-90 origin-left border-2 border-[#6E94B0] ring-1 ring-[#6E94B0] ring-offset-2 ring-offset-[#FFFFFF]"
-                      />
+                  <div className="mt-3 pt-3 border-t border-[#6E94B0]/25 flex flex-col gap-3 font-black">
+                    {/* Vergunning laten regelen door PrefabXpert */}
+                    <div className="flex items-center justify-start gap-3">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Switch
+                          checked={config.vergunningService ?? false}
+                          onCheckedChange={(checked) => onChange({ ...config, vergunningService: checked })}
+                          className="data-[state=checked]:bg-[#6E94B0] scale-90 origin-left border-2 border-[#6E94B0] ring-1 ring-[#6E94B0] ring-offset-2 ring-offset-[#FFFFFF]"
+                        />
+                      </div>
+                      <span className="text-[12px] text-[#6E94B0]">
+                        Vergunning laten regelen door PrefabXpert
+                      </span>
                     </div>
-                    <span className="text-[12px] text-[#6E94B0]">
-                      Demontage bestaande dakkapel
-                    </span>
+                    {/* Demontage bestaande dakkapel */}
+                    <div className="flex items-center justify-start gap-3">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Switch
+                          checked={config.demountExisting}
+                          onCheckedChange={(checked) => onChange({ ...config, demountExisting: checked })}
+                          className="data-[state=checked]:bg-[#6E94B0] scale-90 origin-left border-2 border-[#6E94B0] ring-1 ring-[#6E94B0] ring-offset-2 ring-offset-[#FFFFFF]"
+                        />
+                      </div>
+                      <span className="text-[12px] text-[#6E94B0]">
+                        Demontage bestaande dakkapel
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
