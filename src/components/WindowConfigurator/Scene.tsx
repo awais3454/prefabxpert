@@ -98,11 +98,11 @@ function CameraController({ config }: { config: WindowConfig }) {
         // Reset frame zoom when entering step 5
         frameZoomRef.current = null;
       } else if (config.currentStep === 4) {
-        // Step 4: De hellingshoek — tilted side view (same angle as the old
-        // Hellingshoek step) so the roof pitch is clearly visible instead of
-        // a flat front-on view
-        targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
-        targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
+        // Step 4: De hellingshoek — same tilt as the old Hellingshoek view but
+        // zoomed out (~25%) and panned so the model clears the left card and
+        // sits toward the right of the viewport
+        targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
+        targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
       } else if (config.currentStep >= 4) {
         // Step 5+: front view
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
@@ -123,9 +123,9 @@ function CameraController({ config }: { config: WindowConfig }) {
       const z = getTargetZ(config.windowCopies);
       // Keep current step's camera angle, only adjust Z for zoom
       if (config.currentStep === 4) {
-        // De hellingshoek keeps its tilted side view
-        targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
-        targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
+        // De hellingshoek keeps its tilted, zoomed-out, panned side view
+        targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
+        targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
       } else if (config.currentStep >= 4) {
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
         targetLookRef.current.set(0, 0, 0);
