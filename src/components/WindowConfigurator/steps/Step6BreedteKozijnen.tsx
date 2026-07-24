@@ -93,6 +93,24 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
     onChange({ ...config, kozijnSashTypes: next });
   };
 
+  // Per-pane sash types (used when a kozijn has 2 or 3 vakken, so each
+  // individual pane can independently be draai-/kiepraam or vast raam).
+  const getPaneSashTypes = (index: 0 | 1, count: number): ("draaikiep" | "vast")[] => {
+    const existing = config.kozijnPaneSashTypes?.[index] ?? [];
+    const result: ("draaikiep" | "vast")[] = [];
+    for (let p = 0; p < count; p++) {
+      result.push(existing[p] ?? (p === 0 ? "draaikiep" : "vast"));
+    }
+    return result;
+  };
+  const updatePaneSashType = (index: 0 | 1, paneIdx: number, type: "draaikiep" | "vast", count: number) => {
+    const current = getPaneSashTypes(index, count);
+    current[paneIdx] = type;
+    const nextAll = [config.kozijnPaneSashTypes?.[0] ?? [], config.kozijnPaneSashTypes?.[1] ?? []];
+    nextAll[index] = current;
+    onChange({ ...config, kozijnPaneSashTypes: nextAll as ("draaikiep" | "vast")[][] });
+  };
+
   // Total width: 2x wang (fixed) + kozijn1 + penant + kozijn2
   const totalWidth = WANG_WIDTH * 2 + widths[0] + penant + widths[1];
 
@@ -163,33 +181,69 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
               ))}
             </div>
             <p className="text-[11px] text-[#6E94B0]/70 text-center mt-1">
-              Bij 1 vak: draai-/kiepraam. Bij 2 of meer vakken: het eerste vak is draai-/kiepraam, de rest vast raam.
+              Bij 1 vak: draai-/kiepraam. Bij 2 of meer vakken: kies per raam afzonderlijk.
             </p>
 
-            {/* Explicit choice: keep the tilt sash, or make every pane a fixed (vast) raam */}
-            <span className="text-[13px] font-semibold text-[#6E94B0] text-center mt-2">Type raam</span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => updateSashType(index, "draaikiep")}
-                className={`rounded-[10px] border py-[10px] text-[13px] font-black tracking-tight transition-all duration-200 ${
-                  sashTypes[index] === "draaikiep"
-                    ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
-                    : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
-                }`}
-              >
-                Draai-/kiepraam
-              </button>
-              <button
-                onClick={() => updateSashType(index, "vast")}
-                className={`rounded-[10px] border py-[10px] text-[13px] font-black tracking-tight transition-all duration-200 ${
-                  sashTypes[index] === "vast"
-                    ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
-                    : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
-                }`}
-              >
-                Vast raam
-              </button>
-            </div>
+            {panelCounts[index] === 1 ? (
+              <>
+                {/* Single pane — one Type raam choice for the whole kozijn (unchanged) */}
+                <span className="text-[13px] font-semibold text-[#6E94B0] text-center mt-2">Type raam</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updateSashType(index, "draaikiep")}
+                    className={`rounded-[10px] border py-[10px] text-[13px] font-black tracking-tight transition-all duration-200 ${
+                      sashTypes[index] === "draaikiep"
+                        ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                        : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
+                    }`}
+                  >
+                    Draai-/kiepraam
+                  </button>
+                  <button
+                    onClick={() => updateSashType(index, "vast")}
+                    className={`rounded-[10px] border py-[10px] text-[13px] font-black tracking-tight transition-all duration-200 ${
+                      sashTypes[index] === "vast"
+                        ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                        : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
+                    }`}
+                  >
+                    Vast raam
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 2 or 3 vakken — each individual pane gets its own choice */}
+                <span className="text-[13px] font-semibold text-[#6E94B0] text-center mt-2">Type raam per vak</span>
+                {getPaneSashTypes(index, panelCounts[index]).map((paneType, paneIdx) => (
+                  <div key={paneIdx} className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-medium text-[#6E94B0]/80 text-center">Raam {paneIdx + 1}</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => updatePaneSashType(index, paneIdx, "draaikiep", panelCounts[index])}
+                        className={`rounded-[10px] border py-[8px] text-[12px] font-black tracking-tight transition-all duration-200 ${
+                          paneType === "draaikiep"
+                            ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                            : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
+                        }`}
+                      >
+                        Draai-/kiepraam
+                      </button>
+                      <button
+                        onClick={() => updatePaneSashType(index, paneIdx, "vast", panelCounts[index])}
+                        className={`rounded-[10px] border py-[8px] text-[12px] font-black tracking-tight transition-all duration-200 ${
+                          paneType === "vast"
+                            ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                            : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
+                        }`}
+                      >
+                        Vast raam
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -237,16 +291,15 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
 
   return (
     <div className="flex flex-col flex-1 px-4 pt-2 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
-      {/* Element selector — fixed left-to-right order. Smaller pill size so
-          all 5 tabs (including "Rechterwang") fit/scroll cleanly on mobile. */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-3 custom-scrollbar">
+      {/* Element selector — fixed left-to-right order */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 custom-scrollbar">
         {ELEMENTS.map((el) => {
           const isActive = selected === el.id;
           return (
             <button
               key={el.id}
               onClick={() => setSelected(el.id)}
-              className={`flex-shrink-0 rounded-[8px] border px-2 py-1.5 text-[10px] font-black tracking-tight whitespace-nowrap transition-all duration-200 ${
+              className={`flex-shrink-0 rounded-[10px] border px-3 py-2 text-[11px] font-black tracking-tight whitespace-nowrap transition-all duration-200 ${
                 isActive
                   ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
                   : "border-[#6E94B0]/20 bg-white text-[#6E94B0]/70 hover:border-[#6E94B0]/40"

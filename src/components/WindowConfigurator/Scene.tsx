@@ -1,4 +1,4 @@
-import { Suspense, Component, useRef, useMemo, useEffect } from "react";
+import { Suspense, Component, useRef, useMemo, useEffect, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows, SoftShadows, Html } from "@react-three/drei";
@@ -42,13 +42,24 @@ class SceneErrorBoundary extends Component<{ children: React.ReactNode }, { erro
 /** Smooth animated camera controller - zooms based on window count, resets on step change */
 function CameraController({ config }: { config: WindowConfig }) {
   const controlsRef = useRef<any>(null);
-  const { camera, size } = useThree();
+  const { camera } = useThree();
   const prevStepRef = useRef(config.currentStep);
   const prevCopiesRef = useRef(config.windowCopies);
   const animatingRef = useRef(false);
   const frameZoomRef = useRef<{ frameCenterX: number; frameWidth: number } | null>(null);
 
-  const isMobile = size.width < 640;
+  // isMobile is based on the actual browser viewport width (window.innerWidth),
+  // NOT the Canvas' own rendered size. Using the Canvas size was unreliable —
+  // it can briefly (or in some layouts, persistently) be < 640px even on a
+  // real desktop window, which silently mis-triggers mobile-only camera
+  // logic. Tracking window.innerWidth directly avoids that class of bug.
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Configurator start camera position
   const defaultX = -3.9906003396697605;
   const defaultY = isMobile ? 1.2 : 0.9171260003370636; // Raise camera up
