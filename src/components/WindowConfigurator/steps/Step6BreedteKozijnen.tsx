@@ -291,15 +291,18 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
 
   return (
     <div className="flex flex-col flex-1 px-4 pt-2 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
-      {/* Element selector — fixed left-to-right order */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 custom-scrollbar">
+      {/* Element selector — fixed left-to-right order. Uses a 5-column grid
+          (instead of a horizontally-scrolling row) so all 5 tabs, including
+          "Rechterwang", are always fully visible on mobile without being cut
+          off or needing a scroll — each tab just takes exactly 1/5 width. */}
+      <div className="grid grid-cols-5 gap-1 mb-3">
         {ELEMENTS.map((el) => {
           const isActive = selected === el.id;
           return (
             <button
               key={el.id}
               onClick={() => setSelected(el.id)}
-              className={`flex-shrink-0 rounded-[10px] border px-3 py-2 text-[11px] font-black tracking-tight whitespace-nowrap transition-all duration-200 ${
+              className={`rounded-[6px] border px-0.5 py-1.5 text-[8px] leading-tight font-black tracking-tight text-center transition-all duration-200 ${
                 isActive
                   ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
                   : "border-[#6E94B0]/20 bg-white text-[#6E94B0]/70 hover:border-[#6E94B0]/40"
