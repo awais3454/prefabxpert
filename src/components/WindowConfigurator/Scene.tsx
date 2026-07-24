@@ -89,11 +89,11 @@ function CameraController({ config }: { config: WindowConfig }) {
         targetLookRef.current.set(0, -0.2, 0);
       } else if (config.currentStep === 6) {
         // Step 6: Breedte & penanten - front view to show frame widths and penants
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
       } else if (config.currentStep === 5) {
         // Step 5: Hoogte — straight front view so height/borstwering changes are clearly visible
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
         // Reset frame zoom when entering step 5
         frameZoomRef.current = null;
@@ -105,7 +105,7 @@ function CameraController({ config }: { config: WindowConfig }) {
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
       } else if (config.currentStep >= 4) {
         // Step 5+: front view
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
       } else {
         const scale = z / baseZ;
@@ -127,7 +127,7 @@ function CameraController({ config }: { config: WindowConfig }) {
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
       } else if (config.currentStep >= 4) {
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, z + 1);
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
       } else if (config.currentStep === 2) {
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);

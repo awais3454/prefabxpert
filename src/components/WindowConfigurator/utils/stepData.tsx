@@ -5,7 +5,7 @@ export const STEP_LABELS = [
   "Bekleding",
   "Kleuren",
   "De hellingshoek",
-  "Hoogte",
+  "Complete dakkapel",
   "Breedte, kozijnen en penanten",
   "Dakbedekking en aansluiting",
   "Extra Opties",
@@ -33,18 +33,16 @@ export interface DialogInfo {
 }
 
 export function getDialogContent(currentStep: number): DialogInfo {
-  // Steps were reordered. Map the new step number back to the original dialog case
-  // so each step still shows its correct help content.
   const dialogStepMap: Record<number, number> = {
-    1: 1,   // Type dakkapel
-    2: 7,   // Bekleding zijwang
-    3: 9,   // Kleuren
-    4: 2,   // Hellingshoek
-    5: 3,   // Hoogte
-    6: 12,  // Breedte, kozijnen en penanten (new combined dialog)
-    7: 8,   // Dakkapel
-    8: 10,  // Extra Opties
-    9: 11,  // Positie dakkapel
+    1: 1,
+    2: 7,
+    3: 9,
+    4: 2,
+    5: 3,
+    6: 12,
+    7: 8,
+    8: 10,
+    9: 11,
   };
   currentStep = dialogStepMap[currentStep] ?? currentStep;
   switch (currentStep) {

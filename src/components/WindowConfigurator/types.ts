@@ -10,7 +10,8 @@ export interface WindowConfig {
   windowWidths: number[]; // mm — per-copy kozijn widths (length = windowCopies)
   kozijnTypes?: ("kozijn" | "gesloten")[]; // per-copy: normal window or closed panel (length = windowCopies)
   kozijnPanelCounts?: (number | null)[]; // per-copy raamindeling override; null/undefined = automatic based on width
-  kozijnSashTypes?: ("draaikiep" | "vast")[]; // per-copy: draai-/kiepraam (tilt) or vast raam (fixed only)
+  kozijnSashTypes?: ("draaikiep" | "vast")[]; // per-copy: draai-/kiepraam (tilt) or vast raam (fixed only) — used only when a kozijn has 1 vak
+  kozijnPaneSashTypes?: ("draaikiep" | "vast")[][]; // per-copy, per-pane: outer index = kozijn (0/1), inner index = pane within that kozijn (0..panelCount-1). Used when a kozijn has 2+ vakken so each individual pane can be chosen independently.
   windowHeight: number;  // mm
   lintelLevel: number;   // mm — subtracted from windowHeight
   panelCount: 1 | 2 | 3 | 4 | 5;
@@ -105,6 +106,7 @@ export const DEFAULT_CONFIG: WindowConfig = {
   kozijnTypes: ["kozijn", "kozijn"],
   kozijnPanelCounts: [null, null],
   kozijnSashTypes: ["draaikiep", "draaikiep"],
+  kozijnPaneSashTypes: [["draaikiep"], ["draaikiep"]],
   windowHeight: 1500,
   lintelLevel: 0,
   panelCount: 1,
