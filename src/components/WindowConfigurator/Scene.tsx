@@ -83,14 +83,12 @@ function CameraController({ config }: { config: WindowConfig }) {
     targetLookRef.current.set(0, 0, 0);
   };
 
-  // Steep, slightly-angled bird's-eye view (not perfectly vertical) — used
-  // only while on the Dakbedekking step with "Bitumen" selected, so the
-  // roof-covering strip pattern is clearly visible from above while still
-  // keeping a touch of perspective, matching the reference photo angle.
-  const applyTopView = (copies: number) => {
-    const z = getTargetZ(copies);
-    targetPosRef.current.set(0, z * 0.95, z * 0.35);
-    targetLookRef.current.set(0, 0, 0);
+  // Same X/Z framing as "De hellingshoek" (zoomed out, panned right, whole
+  // roof visible) but the camera sits much higher, giving a top-down feel
+  // while keeping that already-tuned horizontal angle.
+  const applyTopView = (_copies: number) => {
+    targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY + 4 : 5.5, isMobile ? baseZ : 0.2);
+    targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
   };
 
   // Listen for frame selection events from Step5Arrange
