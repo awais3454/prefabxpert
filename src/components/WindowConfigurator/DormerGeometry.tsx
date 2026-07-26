@@ -955,6 +955,59 @@ function BoeiSideBand({ position, size, mainColor, boeiColor, outward }: {
   )
 }
 
+/** Roof covering membrane on top of the flat roof slab — Bitumen shows visible
+ *  grey roll-seam stripes, EPDM is flat matte dark grey with no texture/shine. */
+function RoofMembrane({ position, size, covering = 'bitumen' }: {
+  position: [number, number, number]
+  size: [number, number, number]
+  covering?: 'bitumen' | 'epdm'
+}) {
+  const isBitumen = covering === 'bitumen'
+
+  const bitumenTex = useMemo(() => {
+    if (!isBitumen) return null
+    const canvas = document.createElement('canvas')
+    canvas.width = 256; canvas.height = 256
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#6b6b6b'
+      ctx.fillRect(0, 0, 256, 256)
+      const stripeW = 32
+      for (let x = 0; x < 256; x += stripeW) {
+        ctx.fillStyle = (x / stripeW) % 2 === 0 ? '#787878' : '#5e5e5e'
+        ctx.fillRect(x, 0, stripeW, 256)
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+        ctx.lineWidth = 2
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
+      }
+    }
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(Math.max(size[0] / mm(300), 1), Math.max(size[2] / mm(600), 1))
+    return tex
+  }, [isBitumen, size])
+
+  const matRef = useRef(new THREE.MeshStandardMaterial({
+    color: isBitumen ? '#6b6b6b' : '#3f3f3f',
+    roughness: isBitumen ? 0.85 : 0.9,
+    metalness: 0,
+    map: bitumenTex,
+  }))
+
+  useEffect(() => {
+    matRef.current.color.set(isBitumen ? '#6b6b6b' : '#3f3f3f')
+    matRef.current.roughness = isBitumen ? 0.85 : 0.9
+    matRef.current.map = bitumenTex
+    matRef.current.needsUpdate = true
+  }, [isBitumen, bitumenTex])
+
+  return (
+    <mesh position={position} castShadow receiveShadow material={matRef.current}>
+      <boxGeometry args={size} />
+    </mesh>
+  )
+}
+
 /** Fascia board on top of flat slab — front, left and right faces follow the color */
 function FasciaBoard({ W, H, depth, color, isKader = false }: {
   W: number; H: number; depth: number; color: string; isKader?: boolean
@@ -1542,10 +1595,11 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
         // the roof membrane, meant to sit on top of the trim.
         const slabTopY = H + ROOF_SLAB_T + mm(40) + mm(3)
         return (
-          <mesh position={[0, slabTopY, slabCtrZ]} castShadow receiveShadow>
-            <boxGeometry args={[totalW - mm(300), mm(20), slabLen - mm(300)]} />
-            <meshStandardMaterial color="#3f3f3f" roughness={0.9} metalness={0.0} />
-          </mesh>
+          <RoofMembrane
+            position={[0, slabTopY, slabCtrZ]}
+            size={[totalW - mm(300), mm(20), slabLen - mm(300)]}
+            covering={config.roofCovering}
+          />
         )
       })()}
 
@@ -1573,6 +1627,20 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
             outward="right"
           />
         )}
+        {/* Lood/Loodvervanger flashing — right side, runs along the roof-to-
+            dormer seam next to the cheek, matching the roof pitch angle.
+            Color follows "Aansluiting pannendak": Lood = light grey,
+            Loodvervanger = dark grey/almost black. */}
+        <mesh
+          position={[SIDE_W / 2 + mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
+          rotation={[pitchRad, 0, 0]}
+        >
+          <boxGeometry args={[mm(260), mm(6), Math.hypot(cheekH, depth)]} />
+          <meshStandardMaterial
+            color={config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'}
+            roughness={0.45} metalness={0.3}
+          />
+        </mesh>
       </group>
 
       {/* ── Left side cheek — group at -halfW so scale-flip puts it at -(halfW+SIDE_W) ── */}
@@ -1599,7 +1667,41 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
             outward="left"
           />
         )}
+        {/* Lood/Loodvervanger flashing — left side, mirrored */}
+        <mesh
+          position={[-SIDE_W / 2 - mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
+          rotation={[pitchRad, 0, 0]}
+        >
+          <boxGeometry args={[mm(260), mm(6), Math.hypot(cheekH, depth)]} />
+          <meshStandardMaterial
+            color={config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'}
+            roughness={0.45} metalness={0.3}
+          />
+        </mesh>
       </group>
+
+      {/* Lood/Loodvervanger — front and back bands, connecting the two side
+          bands into one continuous rectangle around the dormer roofline.
+          Front sits at the eave (z=0, y≈0, matching the side bands' front
+          ends); back sits at the ridge (z=-depth, y≈cheekH, matching the
+          side bands' back ends). Both flat (no rotation) since they run
+          straight across, perpendicular to the sloped side bands. */}
+      {(() => {
+        const spanX = 2 * (halfW + SIDE_W / 2 + mm(90)) + mm(260)
+        const floodColor = config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'
+        return (
+          <>
+            <mesh position={[0, mm(3) - mm(60) * Math.tan(pitchRad), mm(60)]} rotation={[pitchRad, 0, 0]}>
+              <boxGeometry args={[spanX, mm(6), mm(220)]} />
+              <meshStandardMaterial color={floodColor} roughness={0.45} metalness={0.3} />
+            </mesh>
+            <mesh position={[0, cheekH - mm(42), -depth + mm(70)]} rotation={[pitchRad, 0, 0]}>
+              <boxGeometry args={[spanX, mm(6), mm(400)]} />
+              <meshStandardMaterial color={floodColor} roughness={0.45} metalness={0.3} />
+            </mesh>
+          </>
+        )
+      })()}
     </group>
   )
 }

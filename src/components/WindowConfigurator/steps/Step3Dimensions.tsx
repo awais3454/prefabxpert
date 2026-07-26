@@ -24,6 +24,11 @@ export function Step3Dimensions({ config, onChange }: StepProps) {
   return (
     <div className="flex flex-col flex-1 px-10 pt-2 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 step-3-dimensions-container overflow-hidden text-center">
 
+      {/* Hoogte Section Header */}
+      <div className="w-full flex justify-center mb-1">
+        <h3 className="step-title-bold text-[16px] text-black leading-tight tracking-tight text-center">Hoogte</h3>
+      </div>
+
       {/* Hoogte Section */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-[15px] font-black text-[#6E94B0] tracking-tight">Hoogte</span>

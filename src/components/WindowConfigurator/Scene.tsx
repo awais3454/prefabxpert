@@ -39,12 +39,16 @@ class SceneErrorBoundary extends Component<{ children: React.ReactNode }, { erro
   }
 }
 
+// Step number of "Dakbedekking en aansluiting" (Bitumen/EPDM + Lood/Loodvervanger).
+const DAKBEDEKKING_STEP = 7;
+
 /** Smooth animated camera controller - zooms based on window count, resets on step change */
 function CameraController({ config }: { config: WindowConfig }) {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
   const prevStepRef = useRef(config.currentStep);
   const prevCopiesRef = useRef(config.windowCopies);
+  const prevRoofCoveringRef = useRef(config.roofCovering);
   const animatingRef = useRef(false);
   const frameZoomRef = useRef<{ frameCenterX: number; frameWidth: number } | null>(null);
 
@@ -69,6 +73,25 @@ function CameraController({ config }: { config: WindowConfig }) {
   const targetLookRef = useRef(new THREE.Vector3(-0.5580617264265286, isMobile ? -0.4 : -0.26438039392461765, -0.17671947803556104)); // user target
 
   const getTargetZ = (copies: number) => baseZ + (copies - 1) * 2.5;
+
+  // The normal front view used on step 5/6/7 etc. — same as the existing
+  // "step >= 4" default, kept as a helper so the Bitumen/EPDM toggle can fall
+  // back to it without duplicating the numbers.
+  const applyFrontView = (copies: number) => {
+    const z = getTargetZ(copies);
+    targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
+    targetLookRef.current.set(0, 0, 0);
+  };
+
+  // Steep, slightly-angled bird's-eye view (not perfectly vertical) — used
+  // only while on the Dakbedekking step with "Bitumen" selected, so the
+  // roof-covering strip pattern is clearly visible from above while still
+  // keeping a touch of perspective, matching the reference photo angle.
+  const applyTopView = (copies: number) => {
+    const z = getTargetZ(copies);
+    targetPosRef.current.set(0, z * 0.95, z * 0.35);
+    targetLookRef.current.set(0, 0, 0);
+  };
 
   // Listen for frame selection events from Step5Arrange
   useEffect(() => {
@@ -98,6 +121,15 @@ function CameraController({ config }: { config: WindowConfig }) {
         // Step 3: slightly zoomed out and rotated from Hellingshoek
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
         targetLookRef.current.set(0, -0.2, 0);
+      } else if (config.currentStep === DAKBEDEKKING_STEP) {
+        // Dakbedekking en aansluiting: top-down view ONLY when Bitumen is the
+        // selected covering, so the strip pattern reads clearly. EPDM (or
+        // any other value) keeps the normal front view used elsewhere.
+        if (config.roofCovering === 'bitumen') {
+          applyTopView(config.windowCopies);
+        } else {
+          applyFrontView(config.windowCopies);
+        }
       } else if (config.currentStep === 6) {
         // Step 6: Breedte & penanten - front view to show frame widths and penants
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
@@ -133,7 +165,13 @@ function CameraController({ config }: { config: WindowConfig }) {
       prevCopiesRef.current = config.windowCopies;
       const z = getTargetZ(config.windowCopies);
       // Keep current step's camera angle, only adjust Z for zoom
-      if (config.currentStep === 4) {
+      if (config.currentStep === DAKBEDEKKING_STEP) {
+        if (config.roofCovering === 'bitumen') {
+          applyTopView(config.windowCopies);
+        } else {
+          applyFrontView(config.windowCopies);
+        }
+      } else if (config.currentStep === 4) {
         // De hellingshoek keeps its tilted, zoomed-out, panned side view
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
@@ -154,6 +192,23 @@ function CameraController({ config }: { config: WindowConfig }) {
       animatingRef.current = true;
     }
   }, [config.windowCopies]);
+
+  // Detect roofCovering toggle (Bitumen ⇄ EPDM) while ALREADY on the
+  // Dakbedekking step — switches to/from the top-down view without needing a
+  // step change. Does nothing on any other step.
+  useMemo(() => {
+    if (prevRoofCoveringRef.current !== config.roofCovering) {
+      prevRoofCoveringRef.current = config.roofCovering;
+      if (config.currentStep === DAKBEDEKKING_STEP) {
+        if (config.roofCovering === 'bitumen') {
+          applyTopView(config.windowCopies);
+        } else {
+          applyFrontView(config.windowCopies);
+        }
+        animatingRef.current = true;
+      }
+    }
+  }, [config.roofCovering]);
 
   // Set initial camera position on mount — use useEffect so controlsRef is ready
   const mountedRef = useRef(false);
