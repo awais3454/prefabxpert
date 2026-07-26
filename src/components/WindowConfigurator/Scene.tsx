@@ -83,12 +83,14 @@ function CameraController({ config }: { config: WindowConfig }) {
     targetLookRef.current.set(0, 0, 0);
   };
 
-  // Same X/Z framing as "De hellingshoek" (zoomed out, panned right, whole
-  // roof visible) but the camera sits much higher, giving a top-down feel
-  // while keeping that already-tuned horizontal angle.
-  const applyTopView = (_copies: number) => {
-    targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY + 4 : 5.5, isMobile ? baseZ : 0.2);
-    targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
+  // Elevated 3/4 view — high enough to read the roof-covering pattern from
+  // above, but angled so the front wall/windows are ALSO visible (not just
+  // the side profile). Applied consistently for the whole Dakbedekking step
+  // whenever Bitumen is selected.
+  const applyTopView = (copies: number) => {
+    const z = getTargetZ(copies);
+    targetPosRef.current.set(-z * 0.35, z * 0.65, z * 0.85);
+    targetLookRef.current.set(-1.8, 0, 0);
   };
 
   // Listen for frame selection events from Step5Arrange
@@ -120,14 +122,10 @@ function CameraController({ config }: { config: WindowConfig }) {
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
         targetLookRef.current.set(0, -0.2, 0);
       } else if (config.currentStep === DAKBEDEKKING_STEP) {
-        // Dakbedekking en aansluiting: top-down view ONLY when Bitumen is the
-        // selected covering, so the strip pattern reads clearly. EPDM (or
-        // any other value) keeps the normal front view used elsewhere.
-        if (config.roofCovering === 'bitumen') {
-          applyTopView(config.windowCopies);
-        } else {
-          applyFrontView(config.windowCopies);
-        }
+        // Dakbedekking en aansluiting: this elevated aerial view applies for
+        // the WHOLE step, no matter which option (Bitumen/EPDM, Lood/
+        // Loodvervanger) is selected.
+        applyTopView(config.windowCopies);
       } else if (config.currentStep === 6) {
         // Step 6: Breedte & penanten - front view to show frame widths and penants
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
@@ -164,11 +162,7 @@ function CameraController({ config }: { config: WindowConfig }) {
       const z = getTargetZ(config.windowCopies);
       // Keep current step's camera angle, only adjust Z for zoom
       if (config.currentStep === DAKBEDEKKING_STEP) {
-        if (config.roofCovering === 'bitumen') {
-          applyTopView(config.windowCopies);
-        } else {
-          applyFrontView(config.windowCopies);
-        }
+        applyTopView(config.windowCopies);
       } else if (config.currentStep === 4) {
         // De hellingshoek keeps its tilted, zoomed-out, panned side view
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
@@ -191,22 +185,9 @@ function CameraController({ config }: { config: WindowConfig }) {
     }
   }, [config.windowCopies]);
 
-  // Detect roofCovering toggle (Bitumen ⇄ EPDM) while ALREADY on the
-  // Dakbedekking step — switches to/from the top-down view without needing a
-  // step change. Does nothing on any other step.
-  useMemo(() => {
-    if (prevRoofCoveringRef.current !== config.roofCovering) {
-      prevRoofCoveringRef.current = config.roofCovering;
-      if (config.currentStep === DAKBEDEKKING_STEP) {
-        if (config.roofCovering === 'bitumen') {
-          applyTopView(config.windowCopies);
-        } else {
-          applyFrontView(config.windowCopies);
-        }
-        animatingRef.current = true;
-      }
-    }
-  }, [config.roofCovering]);
+  // (No longer needed: the Dakbedekking step now uses one fixed aerial view
+  // for the whole step regardless of Bitumen/EPDM or Lood/Loodvervanger
+  // selection, so switching roofCovering no longer needs to change the camera.)
 
   // Set initial camera position on mount — use useEffect so controlsRef is ready
   const mountedRef = useRef(false);
