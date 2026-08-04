@@ -1025,7 +1025,11 @@ export function SideCheek({
   const flipX = side === 'left' ? -1 : 1
 
   const linesTex = useMemo(() => {
-    if (isKader || claddingMaterial !== 'rondkantpanelen') return null
+    // Side cheeks always show the Rabatprofiel stripes for Traditioneel style,
+    // regardless of whether the FRONT is set to "Gladde voorzijde" (flat) or
+    // "Rabatprofiel" — that front-only choice (claddingMaterial) should only
+    // affect the front wall, not the left/right side cheeks.
+    if (isKader) return null
     const canvas = document.createElement('canvas')
     canvas.width = 256; canvas.height = 256
     const ctx = canvas.getContext('2d')

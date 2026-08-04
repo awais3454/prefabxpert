@@ -117,7 +117,7 @@ function CameraController({ config }: { config: WindowConfig }) {
         // Positie dakkapel: front view, panned so the model clears the left
         // card (negative target X pushes the model to the right on screen).
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
-        targetLookRef.current.set(-1.5, 0, 0);
+        targetLookRef.current.set(isMobile ? 0 : -1.5, 0, 0);
       } else if (config.currentStep === 3) {
         // Bekleding
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
@@ -175,7 +175,7 @@ function CameraController({ config }: { config: WindowConfig }) {
       } else if (config.currentStep === 2) {
         // Positie dakkapel keeps its front view panned away from the card
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
-        targetLookRef.current.set(-1.5, 0, 0);
+        targetLookRef.current.set(isMobile ? 0 : -1.5, 0, 0);
       } else if (config.currentStep >= 5) {
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);

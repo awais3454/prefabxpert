@@ -22,6 +22,20 @@
   color: #6E94B0 !important;
 }
 
+/* Only headings (.step-title-bold) should be blue — everything else (step
+   subtitles, option labels, descriptions, popup text, stepper values, etc.)
+   is styled with the brand blue color classes throughout the component
+   files (text-[#6E94B0], text-[#5E84A0], text-[#7BA0BC], text-[#4A7593]).
+   Rather than editing every component, force all of them black here in one
+   place, since .step-title-bold's own !important color rule above still
+   wins for headings. */
+[class*="text-[#6E94B0]"]:not(.step-title-bold),
+[class*="text-[#5E84A0]"],
+[class*="text-[#7BA0BC]"],
+[class*="text-[#4A7593]"] {
+  color: #000000 !important;
+}
+
 /* ... Design system variables ... */
 
 @layer base {
