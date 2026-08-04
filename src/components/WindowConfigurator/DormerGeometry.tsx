@@ -94,6 +94,12 @@ function createWoodMaterial(
 
 const CLAD_TILE_MM = 850
 
+/** Fine-tune knob: shifts the FrontWall strip lines up/down (in mm) relative
+ *  to their calculated world-space position, to nudge them into exact
+ *  alignment with the SideCheek lines if they're still slightly off.
+ *  Positive = lines shift up, negative = lines shift down. */
+const CLAD_PHASE_ADJUST_MM = 0
+
 function claddingRepeatV(heightM: number) {
   return Math.max(heightM / mm(CLAD_TILE_MM), 0.25)
 }
@@ -253,29 +259,46 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    // Anisotropic filtering — without this, the narrow side/penant strips
+    // (which compress the same texture into less on-screen width) mipmap
+    // down and blur, while the wide center strip stays crisp. Raising
+    // anisotropy keeps the lines equally sharp everywhere.
+    tex.anisotropy = 16
+    tex.generateMipmaps = false
+    tex.minFilter = THREE.LinearFilter
     return tex
   }, [showCladding])
 
   const cladTexs = useMemo(() => {
-    const make = (h: number) => {
+    // Each strip's texture previously started its own pattern at v=0
+    // regardless of where that strip actually sits in world space — so a
+    // strip starting higher up (like the top strip, or the side/penant
+    // strips at winCY) showed lines at the wrong world height compared to
+    // the SideCheek (which is one continuous surface starting at Y=0).
+    // Offsetting by each strip's real bottom-Y (in the same CLAD_TILE_MM
+    // units used by claddingRepeatV) keeps every strip's lines in the same
+    // world-space phase as the side cheeks.
+    const make = (h: number, yBottom: number = 0) => {
       if (!claddingLinesTex || h <= 0) return null
       const t = claddingLinesTex.clone()
       t.repeat.set(1, claddingRepeatV(h))
+      const rawOffset = (yBottom + mm(CLAD_PHASE_ADJUST_MM)) / mm(CLAD_TILE_MM)
+      t.offset.y = ((rawOffset % 1) + 1) % 1
       t.needsUpdate = true
       return t
     }
     return {
-      full:   make(H),
-      bottom: make(botH),
-      top:    make(topH),
-      side:   make(hasWin ? (winH as number) : 0),
+      full:   make(H, 0),
+      bottom: make(botH, 0),
+      top:    make(topH, yBot + winH),
+      side:   make(hasWin ? (winH as number) : 0, yBot),
     }
-  }, [claddingLinesTex, H, botH, topH, winH, hasWin])
+  }, [claddingLinesTex, H, botH, topH, winH, hasWin, yBot])
 
-  const cladFullRef   = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
-  const cladBottomRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
-  const cladTopRef    = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
-  const cladSideRef   = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, side: THREE.DoubleSide }))
+  const cladFullRef   = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const cladBottomRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const cladTopRef    = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const cladSideRef   = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
   useFrame(() => {
     if (!showCladding) return
     const pairs: Array<[THREE.MeshStandardMaterial, THREE.Texture | null]> = [
@@ -549,12 +572,55 @@ export function WindowFrame({
   )
 }
 
-export function ClosedPanel({ W, H, frameColor, panelColor }: { W: number; H: number; frameColor: string; panelColor: string }) {
+/** Closed panel — when the front cladding is "Rabatprofiel" (rondkantpanelen),
+ *  a Gesloten paneel gets the SAME horizontal-line texture and color as the
+ *  side cheeks, so it visually reads as a continuation of the side surface
+ *  instead of a plain flat block. HPL / Kader styles stay flat (no lines). */
+export function ClosedPanel({ W, H, frameColor, panelColor, styleType, claddingMaterial, worldYBottom = 0 }: {
+  W: number; H: number; frameColor: string; panelColor: string;
+  styleType?: 'traditional' | 'kader';
+  claddingMaterial?: 'rondkantpanelen' | 'hpl';
+  worldYBottom?: number;
+}) {
   const animatedPanelColor = useAnimatedColor(panelColor, 0.25)
+  const showCladding = styleType === 'traditional' && claddingMaterial !== 'hpl'
 
-  const panelMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.02, color: panelColor }))
+  const claddingTex = useMemo(() => {
+    if (!showCladding) return null
+    const canvas = document.createElement('canvas')
+    canvas.width = 256; canvas.height = 256
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#c8c8c8'
+      ctx.fillRect(0, 0, 256, 256)
+      for (let y = 0; y <= 256; y += 64) {
+        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+        ctx.lineWidth = 6
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+      }
+    }
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    // Same real-height-based repeat as the side cheeks, so plank size matches.
+    tex.repeat.set(1, claddingRepeatV(H))
+    // ClosedPanel is rendered inside a group already offset by winYBottom in
+    // world space, but the mesh's own local UV always starts at v=0 — so
+    // without this, its lines were always in phase with world Y=0 instead of
+    // its own real world position, causing a mismatch against the FrontWall
+    // strips (which DO account for this) and the SideCheek.
+    const rawOffset = (worldYBottom + mm(CLAD_PHASE_ADJUST_MM)) / mm(CLAD_TILE_MM)
+    tex.offset.y = ((rawOffset % 1) + 1) % 1
+    tex.anisotropy = 16
+    tex.generateMipmaps = false
+    tex.minFilter = THREE.LinearFilter
+    return tex
+  }, [showCladding, H, worldYBottom])
+
+  const panelMatRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, color: panelColor }))
   useFrame(() => {
     panelMatRef.current.color.lerp(animatedPanelColor, 0.25)
+    const next = claddingTex ?? null
+    if (panelMatRef.current.map !== next) { panelMatRef.current.map = next; panelMatRef.current.needsUpdate = true }
   })
 
   return (
@@ -821,6 +887,30 @@ function BoeiSideBand({ position, size, mainColor, boeiColor, outward }: {
   )
 }
 
+/** Generates a grey striped canvas texture, used for both the Bitumen roof
+ *  membrane and the Loodvervanger flashing (so both get the same "roll-seam
+ *  stripes" look). stripeWPx controls how wide each stripe is on the 256px
+ *  canvas — bigger number = wider stripes / more spacing between lines. */
+function createStripeTexture(stripeWPx: number, baseColor = '#6b6b6b', lightColor = '#787878', darkColor = '#5e5e5e'): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256; canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.fillStyle = baseColor
+    ctx.fillRect(0, 0, 256, 256)
+    for (let x = 0; x < 256; x += stripeWPx) {
+      ctx.fillStyle = (x / stripeWPx) % 2 === 0 ? lightColor : darkColor
+      ctx.fillRect(x, 0, stripeWPx, 256)
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+      ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  return tex
+}
+
 function RoofMembrane({ position, size, covering = 'bitumen' }: {
   position: [number, number, number]
   size: [number, number, number]
@@ -830,23 +920,9 @@ function RoofMembrane({ position, size, covering = 'bitumen' }: {
 
   const bitumenTex = useMemo(() => {
     if (!isBitumen) return null
-    const canvas = document.createElement('canvas')
-    canvas.width = 256; canvas.height = 256
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.fillStyle = '#6b6b6b'
-      ctx.fillRect(0, 0, 256, 256)
-      const stripeW = 32
-      for (let x = 0; x < 256; x += stripeW) {
-        ctx.fillStyle = (x / stripeW) % 2 === 0 ? '#787878' : '#5e5e5e'
-        ctx.fillRect(x, 0, stripeW, 256)
-        ctx.strokeStyle = 'rgba(0,0,0,0.25)'
-        ctx.lineWidth = 2
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
-      }
-    }
-    const tex = new THREE.CanvasTexture(canvas)
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    // Widened ~2.25x from the original 32px so the stripes/spacing read as
+    // noticeably bigger, less busy roll-seam lines.
+    const tex = createStripeTexture(72)
     tex.repeat.set(Math.max(size[0] / mm(300), 1), Math.max(size[2] / mm(600), 1))
     return tex
   }, [isBitumen, size])
@@ -867,6 +943,45 @@ function RoofMembrane({ position, size, covering = 'bitumen' }: {
 
   return (
     <mesh position={position} castShadow receiveShadow material={matRef.current}>
+      <boxGeometry args={size} />
+    </mesh>
+  )
+}
+
+/** Lood/Loodvervanger flashing band — Loodvervanger gets the same striped
+ *  "roll-seam" look as the Bitumen roof membrane (dark grey stripes), Lood
+ *  stays a flat light-grey surface (no texture), matching how EPDM stays
+ *  flat while Bitumen gets stripes. */
+function FlashingBand({ position, rotation, size, roofConnection }: {
+  position: [number, number, number]
+  rotation: [number, number, number]
+  size: [number, number, number]
+  roofConnection?: 'lood' | 'loodvervanger'
+}) {
+  const isLoodvervanger = roofConnection === 'loodvervanger'
+
+  const stripeTex = useMemo(() => {
+    if (!isLoodvervanger) return null
+    const tex = createStripeTexture(72, '#2a2a2a', '#3a3a3a', '#1c1c1c')
+    tex.repeat.set(Math.max(size[0] / mm(300), 1), Math.max(size[2] / mm(300), 1))
+    return tex
+  }, [isLoodvervanger, size])
+
+  const matRef = useRef(new THREE.MeshStandardMaterial({
+    color: isLoodvervanger ? '#2a2a2a' : '#b8b8b8',
+    roughness: 0.45,
+    metalness: 0.3,
+    map: stripeTex,
+  }))
+
+  useEffect(() => {
+    matRef.current.color.set(isLoodvervanger ? '#2a2a2a' : '#b8b8b8')
+    matRef.current.map = stripeTex
+    matRef.current.needsUpdate = true
+  }, [isLoodvervanger, stripeTex])
+
+  return (
+    <mesh position={position} rotation={rotation} material={matRef.current}>
       <boxGeometry args={size} />
     </mesh>
   )
@@ -926,6 +1041,9 @@ export function SideCheek({
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
     tex.repeat.set(1, claddingRepeatV(H))
+    tex.anisotropy = 16
+    tex.generateMipmaps = false
+    tex.minFilter = THREE.LinearFilter
     return tex
   }, [claddingMaterial, isKader, H])
 
@@ -939,8 +1057,8 @@ export function SideCheek({
     return createWoodMaterial(u, v, woodCol, woodRgh, woodNrm)
   }, [woodCol, woodRgh, woodNrm, H, depth])
 
-  const bodyMatRef  = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, side: THREE.DoubleSide }))
-  const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, side: THREE.DoubleSide }))
+  const bodyMatRef  = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const outerMatRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
 
   useFrame(() => {
     const next = linesTex ?? null
@@ -1151,18 +1269,27 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
         const slabCtrZ = (ROOF_OVERHANG - depth) / 2
         const overhangFrontZ = slabCtrZ + slabHalfLen
         const totalHalfW = isKader ? (W + SIDE_W * 2 + mm(280)) / 2 : (W + (SIDE_W + ROOF_SIDE_OVH) * 2) / 2
-        const pipeX = -totalHalfW + mm(40)
+        const pipeXLeft = -totalHalfW + mm(40)
+        const pipeXRight = totalHalfW - mm(40)
         const overhangBackZ = slabCtrZ - slabHalfLen
         const pipeZ = overhangBackZ + mm(500)
         const pipeHeight = mm(250)
         const pipeRadius = mm(35)
         const extraDown = mm(50)
+        const pipeY = slabTopY - pipeHeight / 2 - extraDown
 
         return (
-          <mesh position={[pipeX, slabTopY - pipeHeight / 2 - extraDown, pipeZ]} castShadow receiveShadow>
-            <cylinderGeometry args={[pipeRadius, pipeRadius, pipeHeight, 16]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.1} envMapIntensity={1.0} />
-          </mesh>
+          <>
+            <mesh position={[pipeXLeft, pipeY, pipeZ]} castShadow receiveShadow>
+              <cylinderGeometry args={[pipeRadius, pipeRadius, pipeHeight, 16]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.1} envMapIntensity={1.0} />
+            </mesh>
+            {/* Same pipe mirrored onto the right side */}
+            <mesh position={[pipeXRight, pipeY, pipeZ]} castShadow receiveShadow>
+              <cylinderGeometry args={[pipeRadius, pipeRadius, pipeHeight, 16]} />
+              <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.1} envMapIntensity={1.0} />
+            </mesh>
+          </>
         )
       })()}
     </group>
@@ -1330,6 +1457,9 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
                   H={winH}
                   frameColor={frameColor}
                   panelColor={config.frontColor || frameColor}
+                  styleType={styleType}
+                  claddingMaterial={claddingMaterial}
+                  worldYBottom={winYBottom}
                 />
               ) : (
                 <>
@@ -1411,16 +1541,12 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
             outward="right"
           />
         )}
-        <mesh
+        <FlashingBand
           position={[SIDE_W / 2 + mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
           rotation={[pitchRad, 0, 0]}
-        >
-          <boxGeometry args={[mm(260), mm(6), Math.hypot(cheekH, depth)]} />
-          <meshStandardMaterial
-            color={config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'}
-            roughness={0.45} metalness={0.3}
-          />
-        </mesh>
+          size={[mm(260), mm(6), Math.hypot(cheekH, depth)]}
+          roofConnection={config.roofConnection}
+        />
       </group>
 
       <group position={[-halfW - (styleType === 'kader' ? mm(150) : 0), 0, styleType === 'kader' ? -mm(10) : 0]}>
@@ -1442,31 +1568,30 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
             outward="left"
           />
         )}
-        <mesh
+        <FlashingBand
           position={[-SIDE_W / 2 - mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
           rotation={[pitchRad, 0, 0]}
-        >
-          <boxGeometry args={[mm(260), mm(6), Math.hypot(cheekH, depth)]} />
-          <meshStandardMaterial
-            color={config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'}
-            roughness={0.45} metalness={0.3}
-          />
-        </mesh>
+          size={[mm(260), mm(6), Math.hypot(cheekH, depth)]}
+          roofConnection={config.roofConnection}
+        />
       </group>
 
       {(() => {
         const spanX = 2 * (halfW + SIDE_W / 2 + mm(90)) + mm(260)
-        const floodColor = config.roofConnection === 'loodvervanger' ? '#2a2a2a' : '#b8b8b8'
         return (
           <>
-            <mesh position={[0, mm(3) - mm(60) * Math.tan(pitchRad), mm(60)]} rotation={[pitchRad, 0, 0]}>
-              <boxGeometry args={[spanX, mm(6), mm(220)]} />
-              <meshStandardMaterial color={floodColor} roughness={0.45} metalness={0.3} />
-            </mesh>
-            <mesh position={[0, cheekH - mm(42), -depth + mm(70)]} rotation={[pitchRad, 0, 0]}>
-              <boxGeometry args={[spanX, mm(6), mm(400)]} />
-              <meshStandardMaterial color={floodColor} roughness={0.45} metalness={0.3} />
-            </mesh>
+            <FlashingBand
+              position={[0, mm(3) - mm(60) * Math.tan(pitchRad), mm(60)]}
+              rotation={[pitchRad, 0, 0]}
+              size={[spanX, mm(6), mm(220)]}
+              roofConnection={config.roofConnection}
+            />
+            <FlashingBand
+              position={[0, cheekH - mm(42), -depth + mm(70)]}
+              rotation={[pitchRad, 0, 0]}
+              size={[spanX, mm(6), mm(400)]}
+              roofConnection={config.roofConnection}
+            />
           </>
         )
       })()}

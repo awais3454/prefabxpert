@@ -2,27 +2,27 @@ import React from 'react';
 
 export const STEP_LABELS = [
   "Type dakkapel",
+  "Positie dakkapel",
   "Bekleding",
   "Kleuren",
   "De hellingshoek",
   "Complete dakkapel",
-  "Breedte, kozijnen en penanten",
+  "Breedte, kozijnen en blind paneel",
   "Dakbedekking en aansluiting",
-  "Extra Opties",
-  "Positie dakkapel"
+  "Extra Opties"
 ];
 
 export function getSubtitle(currentStep: number): string {
   switch (currentStep) {
-    case 1: return "Welke uitstraling heeft uw voorkeur?";
-    case 2: return "Kies het materiaal van de zijkant van de dakkapel.";
-    case 3: return "Kies de kleuren van de dakkapel.";
-    case 4: return "Hoe schuin is uw dak?";
-    case 5: return "Hoe hoog moet uw dakkapel worden?";
-    case 6: return "Stel de breedte, kozijnen en penanten afzonderlijk in.";
-    case 7: return "Kies de dakbedekking en de aansluiting op het pannendak.";
-    case 8: return "Maak de dakkapel compleet met extra opties.";
-    case 9: return "Waar moet de dakkapel geplaatst worden op uw woning?";
+    case 1: return "Welk model heeft uw voorkeur?";
+    case 2: return "Waar moet de dakkapel geplaatst worden op uw woning?";
+    case 3: return "Kies het materiaal van de dakkapel";
+    case 4: return "Kies de kleuren van de dakkapel.";
+    case 5: return "Gebruik deze ontwerp tool via de telefoon om de graden te meten.";
+    case 6: return "Hoe hoog moet uw dakkapel worden? Wilt u nog een blindpaneel onder uw kozijnen?";
+    case 7: return "Stel de breedte, kozijnen en penanten afzonderlijk in.";
+    case 8: return "Kies de dakbedekking en de aansluiting op het pannendak.";
+    case 9: return "Maak de dakkapel compleet met extra opties.";
     default: return "Selecteer de gewenste optie voor uw dakkapel.";
   }
 }
@@ -35,14 +35,14 @@ export interface DialogInfo {
 export function getDialogContent(currentStep: number): DialogInfo {
   const dialogStepMap: Record<number, number> = {
     1: 1,
-    2: 7,
-    3: 9,
-    4: 2,
-    5: 3,
-    6: 12,
-    7: 8,
-    8: 10,
-    9: 11,
+    2: 11,
+    3: 7,
+    4: 9,
+    5: 2,
+    6: 3,
+    7: 12,
+    8: 8,
+    9: 10,
   };
   currentStep = dialogStepMap[currentStep] ?? currentStep;
   switch (currentStep) {
@@ -199,13 +199,16 @@ export function getDialogContent(currentStep: number): DialogInfo {
         content: (
           <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
-              Keralit is verkrijgbaar in vier verschillende hoogtes: 143 mm, 166 mm, 177 mm en 190 mm.
+              De zijkanten van de dakkapel worden standaard uitgevoerd met Keralit rabatpanelen.
             </p>
             <p className="text-[15px] leading-relaxed">
-              HPL, oftewel hoogdruklaminaat, is een volledig gladde plaat die zorgt voor een moderne en strakke uitstraling. De platen kunnen zowel geschroefd als gelijmd worden.
+              Voor de voorzijde kunt u kiezen uit Keralit rabatstroken, een gladde afwerking met boeidelen of composiet met smalle verticale delen. De afbeelding van de dakkapel wordt automatisch aangepast aan uw keuze.
             </p>
             <p className="text-[15px] leading-relaxed">
-              Liever houten rabatdelen of een zinken afwerking? Neem contact met ons op. Wij denken graag met u mee.
+              Keralit rabatpanelen zijn verkrijgbaar in verschillende profielhoogtes en kleuren. De beschikbare mogelijkheden zijn afhankelijk van de gekozen uitvoering.
+            </p>
+            <p className="text-[15px] leading-relaxed">
+              Liever een houten, aluminium of zinken afwerking? Neem dan contact met ons op. Wij bespreken graag de mogelijkheden met u.
             </p>
           </div>
         )
@@ -241,7 +244,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
         content: (
           <div className="space-y-2 text-[#6E94B0] font-medium pb-2">
             <p className="text-[17px] leading-relaxed">
-              Naast rolluiken, insectenhorren en ventilatieroosters kunt u ook kiezen voor screens aan de buitenzijde en nog verschillende andere opties.
+              Naast de genoemde keuze opties kunt u nog kiezen voor talloze andere extra's. Bent u op zoek naar andere keuzes neem dan gerust contact op en wij helpen u daar graag mee verder.
             </p>
           </div>
         )
@@ -279,15 +282,15 @@ export function getDialogContent(currentStep: number): DialogInfo {
             <ul className="space-y-2">
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#6E94B0]">Linker- en rechterwang:</span> vaste breedte van 190 mm, kan niet worden verwijderd of verkleind.</span>
+                <span><span className="font-bold text-[#6E94B0]">Linker- en rechterwang:</span> vaste breedte van 200 mm, kan niet worden verwijderd of verkleind. De breedte hiervan kunt u wel aanpassen.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#6E94B0]">Kozijn 1 en Kozijn 2:</span> stel de breedte apart in, of kies voor een gesloten paneel in plaats van een kozijn.</span>
+                <span><span className="font-bold text-[#6E94B0]">Kozijn 1 en Kozijn 2:</span> stel de breedte apart in. U kunt kiezen voor draaikiep raam, vast raam of een gesloten paneel.</span>
               </li>
               <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
-                <span><span className="font-bold text-[#6E94B0]">Penant:</span> de tussenwand tussen de twee kozijnen, de breedte hiervan kunt u hier aanpassen.</span>
+                <span><span className="font-bold text-[#6E94B0]">Blind paneel:</span> Is het blinde stuk dat uw tussenmuur afschermd, de breedte hiervan kunt u hier aanpassen.</span>
               </li>
             </ul>
             <p className="text-[15px] leading-relaxed">

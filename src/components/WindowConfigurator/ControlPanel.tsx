@@ -59,22 +59,37 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
     }
   };
 
-  const renderStep = () => {
+  // const renderStep = () => {
+  //   switch (actualCase) {
+  //     case 1: return <Step1Type config={config} onChange={onChange} />;
+  //     case 2: return <Step6Cladding config={config} onChange={onChange} />;
+  //     case 3: return <Step7Colors config={config} onChange={onChange} />;
+  //     case 4: return <Step2Pitch config={config} onChange={onChange} />;
+  //     case 5: return <Step3Dimensions config={config} onChange={onChange} />;
+  //     case 6: return <Step6BreedteKozijnen config={config} onChange={onChange} />;
+  //     case 7: return <Step7bDakkapel config={config} onChange={onChange} />;
+  //     case 8: return <Step8Options config={config} onChange={onChange} />;
+  //     case 9: return <Step9Position config={config} onChange={onChange} />;
+  //     case 10: return <Step10Request config={config} onChange={onChange} onPrev={prevStep} />;
+  //     default: return <Step1Type config={config} onChange={onChange} />;
+  //   }
+  // };
+const renderStep = () => {
     switch (actualCase) {
-      case 1: return <Step1Type config={config} onChange={onChange} />;
-      case 2: return <Step6Cladding config={config} onChange={onChange} />;
-      case 3: return <Step7Colors config={config} onChange={onChange} />;
-      case 4: return <Step2Pitch config={config} onChange={onChange} />;
-      case 5: return <Step3Dimensions config={config} onChange={onChange} />;
-      case 6: return <Step6BreedteKozijnen config={config} onChange={onChange} />;
-      case 7: return <Step7bDakkapel config={config} onChange={onChange} />;
-      case 8: return <Step8Options config={config} onChange={onChange} />;
-      case 9: return <Step9Position config={config} onChange={onChange} />;
-      case 10: return <Step10Request config={config} onChange={onChange} onPrev={prevStep} />;
-      default: return <Step1Type config={config} onChange={onChange} />;
+case 1: return <Step1Type config={config} onChange={onChange} />;
+case 2: return <Step9Position config={config} onChange={onChange} />;
+case 3: return <Step6Cladding config={config} onChange={onChange} />;
+case 4: return <Step7Colors config={config} onChange={onChange} />;
+case 5: return <Step2Pitch config={config} onChange={onChange} />;
+case 6: return <Step3Dimensions config={config} onChange={onChange} />;
+case 7: return <Step6BreedteKozijnen config={config} onChange={onChange} />;
+case 8: return <Step7bDakkapel config={config} onChange={onChange} />;
+case 9: return <Step8Options config={config} onChange={onChange} />;
+case 10: return <Step10Request config={config} onChange={onChange} onPrev={prevStep} />;
+default: return <Step1Type config={config} onChange={onChange} />;
     }
   };
-
+  
   return (
     <div className="h-full w-full sm:absolute sm:inset-0 sm:pointer-events-none">
       <div className="h-full w-full sm:absolute sm:bottom-6 sm:left-6 sm:right-auto sm:h-auto sm:max-h-[85vh] sm:pointer-events-auto sm:flex sm:w-[480px] sm:flex-col sm:rounded-[24px] sm:shadow-2xl sm:border sm:border-[#6E94B0]/25 sm:backdrop-blur-sm bg-[#FFFFFF] flex flex-col rounded-t-[20px] border-t border-[#6E94B0]/25 shadow-2xl backdrop-blur-sm overflow-hidden transition-all duration-300 ease-in-out">

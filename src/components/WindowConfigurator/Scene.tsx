@@ -40,7 +40,7 @@ class SceneErrorBoundary extends Component<{ children: React.ReactNode }, { erro
 }
 
 // Step number of "Dakbedekking en aansluiting" (Bitumen/EPDM + Lood/Loodvervanger).
-const DAKBEDEKKING_STEP = 7;
+const DAKBEDEKKING_STEP = 8;
 
 /** Smooth animated camera controller - zooms based on window count, resets on step change */
 function CameraController({ config }: { config: WindowConfig }) {
@@ -96,7 +96,7 @@ function CameraController({ config }: { config: WindowConfig }) {
   // Listen for frame selection events from Step5Arrange
   useEffect(() => {
     const handleFrameSelected = (e: any) => {
-      if (config.currentStep === 5 && e.detail) {
+      if (config.currentStep === 6 && e.detail) {
         frameZoomRef.current = {
           frameCenterX: e.detail.frameCenterX,
           frameWidth: e.detail.frameWidth
@@ -108,42 +108,47 @@ function CameraController({ config }: { config: WindowConfig }) {
     return () => window.removeEventListener('frameSelected', handleFrameSelected);
   }, [config.currentStep]);
 
-  // Detect step change → reset to front, special angle for Hellingshoek (step 2)
+  // Detect step change → reset to front, special angle for Hellingshoek
   useMemo(() => {
     if (config.currentStep !== prevStepRef.current) {
       prevStepRef.current = config.currentStep;
       const z = getTargetZ(config.windowCopies);
       if (config.currentStep === 2) {
-        // Hellingshoek: left side view to show roof pitch angle
+        // Positie dakkapel: front view, panned so the model clears the left
+        // card (negative target X pushes the model to the right on screen).
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
+        targetLookRef.current.set(-1.5, 0, 0);
+      } else if (config.currentStep === 3) {
+        // Bekleding
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
         targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
-      } else if (config.currentStep === 3) {
-        // Step 3: slightly zoomed out and rotated from Hellingshoek
+      } else if (config.currentStep === 4) {
+        // Kleuren: slightly zoomed out and rotated, panned right so the
+        // model clears the left card (same tilt/angle as before)
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
-        targetLookRef.current.set(0, -0.2, 0);
+        targetLookRef.current.set(-1.5, -0.2, 0);
       } else if (config.currentStep === DAKBEDEKKING_STEP) {
         // Dakbedekking en aansluiting: this elevated aerial view applies for
         // the WHOLE step, no matter which option (Bitumen/EPDM, Lood/
         // Loodvervanger) is selected.
         applyTopView(config.windowCopies);
+      } else if (config.currentStep === 7) {
+        // Breedte, kozijnen en blind paneel - front view to show frame widths
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
+        targetLookRef.current.set(0, 0, 0);
       } else if (config.currentStep === 6) {
-        // Step 6: Breedte & penanten - front view to show frame widths and penants
+        // Hoogte — straight front view so height/borstwering changes are clearly visible
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
-      } else if (config.currentStep === 5) {
-        // Step 5: Hoogte — straight front view so height/borstwering changes are clearly visible
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
-        targetLookRef.current.set(0, 0, 0);
-        // Reset frame zoom when entering step 5
+        // Reset frame zoom when entering this step
         frameZoomRef.current = null;
-      } else if (config.currentStep === 4) {
-        // Step 4: De hellingshoek — same tilt as the old Hellingshoek view but
-        // zoomed out (~25%) and panned so the model clears the left card and
-        // sits toward the right of the viewport
+      } else if (config.currentStep === 5) {
+        // De hellingshoek — same tilt as before, zoomed out and panned so it
+        // clears the left card and sits toward the right of the viewport
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
-      } else if (config.currentStep >= 4) {
-        // Step 5+: front view
+      } else if (config.currentStep >= 5) {
+        // Any remaining later step (e.g. Extra Opties): front view
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
       } else {
@@ -163,19 +168,23 @@ function CameraController({ config }: { config: WindowConfig }) {
       // Keep current step's camera angle, only adjust Z for zoom
       if (config.currentStep === DAKBEDEKKING_STEP) {
         applyTopView(config.windowCopies);
-      } else if (config.currentStep === 4) {
+      } else if (config.currentStep === 5) {
         // De hellingshoek keeps its tilted, zoomed-out, panned side view
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
-      } else if (config.currentStep >= 4) {
+      } else if (config.currentStep === 2) {
+        // Positie dakkapel keeps its front view panned away from the card
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
+        targetLookRef.current.set(-1.5, 0, 0);
+      } else if (config.currentStep >= 5) {
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
-      } else if (config.currentStep === 2) {
+      } else if (config.currentStep === 3) {
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
         targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
-      } else if (config.currentStep === 3) {
+      } else if (config.currentStep === 4) {
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
-        targetLookRef.current.set(0, -0.2, 0);
+        targetLookRef.current.set(-1.5, -0.2, 0);
       } else {
         const scale = z / baseZ;
         targetPosRef.current.set(defaultX * scale, defaultY, z);
@@ -211,7 +220,7 @@ function CameraController({ config }: { config: WindowConfig }) {
     controls.enabled = false;
 
     // If frame zoom is active, calculate zoomed camera position
-    if (frameZoomRef.current && config.currentStep === 5) {
+    if (frameZoomRef.current && config.currentStep === 6) {
       const { frameCenterX, frameWidth } = frameZoomRef.current;
       // Convert mm to three.js units (divide by 1000)
       const centerX = frameCenterX / 1000;

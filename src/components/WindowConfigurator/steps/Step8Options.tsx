@@ -20,7 +20,7 @@ export function Step8Options({ config, onChange }: StepProps) {
     {
       id: "vents",
       title: "Ventilatieroosters",
-      description: "Zorgen voor gezonde luchtcirculatie, zonder tocht of open ramen.",
+      description: "Zorgen voor een gezonde luchtcirculatie, zonder open ramen.",
       priceLabel: "€215 per stuk",
       enabled: config.ventGrillEnabled,
       onToggle: () => onChange({ ...config, ventGrillEnabled: !config.ventGrillEnabled })
@@ -35,7 +35,7 @@ export function Step8Options({ config, onChange }: StepProps) {
     },
     {
       id: "insect_screens",
-      title: "Horren",
+      title: "Inzet klikhorren",
       description: "Laten frisse lucht binnen, maar houden muggen en andere insecten buiten.",
       priceLabel: "€165 per stuk",
       enabled: config.insectScreenEnabled,
@@ -44,7 +44,7 @@ export function Step8Options({ config, onChange }: StepProps) {
     {
       id: "shutters",
       title: "Rolluik",
-      description: "Houden het in de zomer tot wel 10°C koeler en zorgen voor extra privacy en verduistering.",
+      description: "Houden het in de zomer koeler, in de winter warmer en zorgen voor extra privacy en verduistering.",
       priceLabel: "€600 per meter",
       enabled: config.shutterEnabled,
       onToggle: () => onChange({ ...config, shutterEnabled: !config.shutterEnabled, shutterOpen: config.shutterEnabled ? config.shutterOpen : 33 })
@@ -60,10 +60,18 @@ export function Step8Options({ config, onChange }: StepProps) {
     {
       id: "afval",
       title: "Afval",
-      description: "Wij nemen de afvalafvoer van uw oude dakkapel en bouwafval voor onze rekening.",
+      description: "Wij nemen het bouwafval voor onze rekening.",
       priceLabel: "€140 per meter",
       enabled: config.afvalAfvoerenEnabled ?? false,
       onToggle: () => onChange({ ...config, afvalAfvoerenEnabled: !(config.afvalAfvoerenEnabled ?? false) })
+    },
+    {
+      id: "demonteren_oude_dakkapel",
+      title: "Demonteren oude dakkapel",
+      description: "Wij verwijderen de oude dakkapel",
+      priceLabel: "",
+      enabled: config.demountExisting ?? false,
+      onToggle: () => onChange({ ...config, demountExisting: !(config.demountExisting ?? false) })
     },
     {
       id: "triple_glas",
