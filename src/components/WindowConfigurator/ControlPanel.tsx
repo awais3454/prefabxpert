@@ -1,5 +1,6 @@
 import { WindowConfig } from "./types.ts";
 import { Step1Type } from "./steps/Step1Type.tsx";
+import { StepDaktrim } from "./steps/StepDaktrim.tsx";
 import { Step2Pitch } from "./steps/Step2Pitch.tsx";
 import { Step3Dimensions } from "./steps/Step3Dimensions.tsx";
 import { Step6BreedteKozijnen } from "./steps/Step6BreedteKozijnen.tsx";
@@ -24,15 +25,32 @@ import {
 interface ControlPanelProps {
   config: WindowConfig;
   onChange: (config: WindowConfig) => void;
+  dormers?: WindowConfig[];
+  activeDormerIndex?: number;
+  onSwitchDormer?: (index: number) => void;
+  onAddDormer?: () => void;
+  onRemoveDormer?: (index: number) => void;
+  onResetAll?: () => void;
 }
 
 // Absolute step "case" numbers (used for labels/subtitles/dialogs/rendering).
-// Case 2 = Bekleding — only relevant for Traditioneel, since Kader has just one
-// fixed look. When Kader is selected, this case is skipped from the flow.
-const FULL_STEP_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const KADER_STEP_ORDER = [1, 3, 4, 5, 6, 7, 8, 9, 10];
+// Case 4 = Bekleding — only relevant for Traditioneel, since Kader has just
+// one fixed look, so it's excluded from KADER_STEP_ORDER. Positie dakkapel
+// (case 3) applies to BOTH styles — a dormer's position on the roof isn't
+// tied to its cladding style, so it's included for Kader too.
+const FULL_STEP_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const KADER_STEP_ORDER = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11];
 
-export function ControlPanel({ config, onChange }: ControlPanelProps) {
+export function ControlPanel({
+  config,
+  onChange,
+  dormers = [config],
+  activeDormerIndex = 0,
+  onSwitchDormer,
+  onAddDormer,
+  onRemoveDormer,
+  onResetAll,
+}: ControlPanelProps) {
   const isKader = config.styleType === "kader";
   const stepOrder = isKader ? KADER_STEP_ORDER : FULL_STEP_ORDER;
   const totalSteps = stepOrder.length;
@@ -43,9 +61,23 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
   const actualCase = stepOrder[currentStep - 1] ?? 1;
 
   const isRequestStep = currentStep === totalSteps;
-  const isPositionStep = currentStep === totalSteps - 1;
+  // Positie dakkapel is actualCase 3 after the Daktrim step was inserted as
+  // case 2 — this determines when the footer's "Extra dakkapel toevoegen"
+  // button should appear.
+  const isPositionStep = actualCase === 3;
 
-  const pricing = calculateStepPricing(config);
+  // Total price shown to the customer is the sum across ALL dormers, not
+  // just the one currently being edited — with a single dormer this is the
+  // same number as before.
+  const combinedTotalPrice = dormers.reduce((sum, d) => sum + calculateStepPricing(d).totalPrice, 0);
+
+  const resetConfig = () => {
+    onResetAll?.();
+  };
+
+  const addDormer = () => {
+    onAddDormer?.();
+  };
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -77,15 +109,16 @@ export function ControlPanel({ config, onChange }: ControlPanelProps) {
 const renderStep = () => {
     switch (actualCase) {
 case 1: return <Step1Type config={config} onChange={onChange} />;
-case 2: return <Step9Position config={config} onChange={onChange} />;
-case 3: return <Step6Cladding config={config} onChange={onChange} />;
-case 4: return <Step7Colors config={config} onChange={onChange} />;
-case 5: return <Step2Pitch config={config} onChange={onChange} />;
-case 6: return <Step3Dimensions config={config} onChange={onChange} />;
-case 7: return <Step6BreedteKozijnen config={config} onChange={onChange} />;
-case 8: return <Step7bDakkapel config={config} onChange={onChange} />;
-case 9: return <Step8Options config={config} onChange={onChange} />;
-case 10: return <Step10Request config={config} onChange={onChange} onPrev={prevStep} />;
+case 2: return <StepDaktrim config={config} onChange={onChange} />;
+case 3: return <Step9Position config={config} onChange={onChange} />;
+case 4: return <Step6Cladding config={config} onChange={onChange} />;
+case 5: return <Step7Colors config={config} onChange={onChange} />;
+case 6: return <Step2Pitch config={config} onChange={onChange} />;
+case 7: return <Step3Dimensions config={config} onChange={onChange} />;
+case 8: return <Step6BreedteKozijnen config={config} onChange={onChange} />;
+case 9: return <Step7bDakkapel config={config} onChange={onChange} />;
+case 10: return <Step8Options config={config} onChange={onChange} onAddDormer={addDormer} onReset={resetConfig} />;
+case 11: return <Step10Request config={config} onChange={onChange} onPrev={prevStep} />;
 default: return <Step1Type config={config} onChange={onChange} />;
     }
   };
@@ -121,6 +154,39 @@ default: return <Step1Type config={config} onChange={onChange} />;
               </Dialog>
             </div>
 
+            {/* Dormer switcher — only shown once a second dormer has been
+                added via "Extra dakkapel toevoegen". Each tab switches which
+                dormer is being edited; the small × removes that dormer
+                (only shown when there's more than one, so there's always at
+                least one left). */}
+            {dormers.length > 1 && (
+              <div className="w-full flex items-center gap-1.5 overflow-x-auto pb-2 mb-1 custom-scrollbar">
+                {dormers.map((_, i) => (
+                  <div key={i} className="flex-shrink-0 flex items-center">
+                    <button
+                      onClick={() => onSwitchDormer?.(i)}
+                      className={`rounded-full border px-3 py-1 text-[11px] font-black tracking-tight whitespace-nowrap transition-all duration-200 ${
+                        i === activeDormerIndex
+                          ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                          : "border-[#6E94B0]/25 bg-white text-[#6E94B0]/70 hover:border-[#6E94B0]/40"
+                      }`}
+                    >
+                      Dakkapel {i + 1}
+                    </button>
+                    {dormers.length > 1 && (
+                      <button
+                        onClick={() => onRemoveDormer?.(i)}
+                        aria-label={`Dakkapel ${i + 1} verwijderen`}
+                        className="ml-0.5 h-5 w-5 rounded-full flex items-center justify-center text-[#6E94B0]/50 hover:text-[#6E94B0] hover:bg-[#6E94B0]/10 transition-colors focus:outline-none"
+                      >
+                        <X size={11} strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Title Row — own line, centered */}
             <div className="w-full text-center mb-1">
               <h2 className="step-title-bold text-[18px] sm:text-[22px] text-black leading-tight tracking-tight">
@@ -152,7 +218,7 @@ default: return <Step1Type config={config} onChange={onChange} />;
           <div className="hidden sm:flex w-full border-t border-[#6E94B0]/25 bg-[#FFFFFF] px-5 py-2.5 items-center justify-between flex-shrink-0">
             <span className="text-[13px] font-bold text-[#6E94B0] tracking-tight">Totaalprijs</span>
             <span className="text-[16px] font-black text-[#6E94B0] tracking-tight">
-              {formatPrice(pricing.totalPrice)}
+              {formatPrice(combinedTotalPrice)}
             </span>
           </div>
         )}
@@ -178,14 +244,14 @@ default: return <Step1Type config={config} onChange={onChange} />;
             <div className="flex sm:hidden flex-col items-center flex-1">
               <span className="text-[10px] font-bold text-[#7BA0BC] tracking-tight">Totaalprijs</span>
               <span className="text-[14px] font-black text-[#6E94B0] tracking-tight leading-tight">
-                {formatPrice(pricing.totalPrice)}
+                {formatPrice(combinedTotalPrice)}
               </span>
             </div>
 
             <div className={`flex-shrink-0 flex items-center ${isPositionStep ? 'gap-1.5' : ''}`}>
               {isPositionStep && (
                 <button
-                  onClick={() => { }}
+                  onClick={addDormer}
                   className="h-[34px] px-3 rounded-full border border-[#F0F0F0] bg-[#F0F0F0] text-[#6E94B0] text-[11px] font-black hover:bg-[#F0F0F0] transition-all whitespace-nowrap shadow-sm"
                 >
                   Extra dakkapel toevoegen

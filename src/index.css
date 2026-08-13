@@ -205,25 +205,41 @@ All colors MUST be HSL.
 [role="dialog"],
 .DialogContent {
   background-color: #FFFFFF !important;
-  color: #4A7593 !important;
+  /* Fallback color for anything inside the dialog not matched by the more
+     specific heading/body rules below — kept black so untouched elements
+     default to black rather than the old all-blue scheme. */
+  color: #000000 !important;
   border: 1px solid rgba(110, 148, 176, 0.35) !important;
 }
 
+/* "?" popup HEADING (title) — stays blue. This is intentionally listed
+   AFTER the body-text rule below so it isn't accidentally overridden by any
+   equal-specificity selector; headings are never matched by the body rule's
+   tag/class list (p, span, a, li, strong, etc.), so there's no conflict. */
+
+/* "?" popup BODY text — paragraphs, list items, links, bold inline labels,
+   and any leftover slate/zinc/black utility classes — all black now,
+   instead of the old scheme where everything (including bold labels) was
+   blue. */
 [role="dialog"] p,
 [role="dialog"] span,
-[role="dialog"] h2,
-[role="dialog"] h3,
 [role="dialog"] a,
 [role="dialog"] li,
-[role="dialog"] .DialogTitle,
+[role="dialog"] strong,
+[role="dialog"] .font-bold,
+[role="dialog"] .font-extrabold,
 [role="dialog"] [class*="text-slate-"],
 [role="dialog"] [class*="text-zinc-"],
-[role="dialog"] [class*="text-black"] {
-  color: #4A7593 !important;
+[role="dialog"] [class*="text-black"],
+[role="dialog"] [class*="decoration-slate-900"] {
+  color: #000000 !important;
+  text-decoration-color: #000000 !important;
 }
 
-[role="dialog"] a {
-  text-decoration-color: #6E94B0 !important;
+[role="dialog"] h2,
+[role="dialog"] h3,
+[role="dialog"] .DialogTitle {
+  color: #6E94B0 !important;
 }
 
 [role="dialog"] .bg-slate-300 {
@@ -258,16 +274,6 @@ div[class*="bg-white"] textarea {
 .pointer-events-auto [class*="text-zinc-"],
 .pointer-events-auto [class*="text-black"] {
   color: #4A7593 !important;
-}
-
-/* Target bold highlights and underlines in dialogs with Brown theme */
-[role="dialog"] .text-slate-900,
-[role="dialog"] .font-bold,
-[role="dialog"] .font-extrabold,
-[role="dialog"] strong,
-[role="dialog"] [class*="decoration-slate-900"] {
-  color: #6E94B0 !important;
-  text-decoration-color: #6E94B0 !important;
 }
 
 /* Fix for plus/minus icons on white buttons (Prevents global white text override) */

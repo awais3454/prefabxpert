@@ -29,6 +29,15 @@ const PRICING = {
   PITCH_SLOPE_20_28: pricingConfig.pitchSlope20_28,
   HPL_CLADDING_PRICE: pricingConfig.hplCladdingPrice,
   COLORED_FRAME_PRICE: pricingConfig.coloredFramePrice,
+  SKG_BESLAG_PRICE: pricingConfig.skgBeslagPrice,
+  VENTILATIESTAND_PRICE: pricingConfig.ventilatiestandPrice,
+  ROLLUIK_VOORBEREIDING_PRICE: pricingConfig.rolluikVoorbereidingPrice,
+  SOMFY_MOTOR_PRICE: pricingConfig.somfyMotorPrice,
+  SOMFY_MOTOR_MAX_SPAN_MM: pricingConfig.somfyMotorMaxSpanMm,
+  AFSTANDSBEDIENING_PRICE: pricingConfig.afstandsbedieningPrice,
+  MOTOREN_KOPPELEN_PRICE: pricingConfig.motorenKoppelenPrice,
+  DEMONTAGE_OUDE_DAKKAPEL_PRICE: pricingConfig.demontageOudeDakkapelPrice,
+  VERGUNNING_SERVICE_PRICE: pricingConfig.vergunningServicePrice,
 };
 
 // Dormer size price table (width in mm at 1500mm height, price incl. VAT)
@@ -142,8 +151,19 @@ export function calculateStepPricing(config: WindowConfig) {
     widths.forEach((w) => {
       const wMeters = w / 1000;
       shutterPrice += Math.round(PRICING.SHUTTER_PRICE * wMeters);
+      // Somfy motor — one per max SOMFY_MOTOR_MAX_SPAN_MM of shutter width,
+      // per window run (a wider shutter run needs an extra motor).
+      const motorCount = Math.max(1, Math.ceil(w / PRICING.SOMFY_MOTOR_MAX_SPAN_MM));
+      shutterPrice += motorCount * PRICING.SOMFY_MOTOR_PRICE;
     });
+    // Afstandsbediening / Motoren koppelen are one-off addons for the whole
+    // rolluik set, not multiplied per window.
+    if (config.rolluikAfstandsbediening) shutterPrice += PRICING.AFSTANDSBEDIENING_PRICE;
+    if (config.rolluikMotorenKoppelen) shutterPrice += PRICING.MOTOREN_KOPPELEN_PRICE;
     optionsPrice += shutterPrice;
+  }
+  if (config.rolluikVoorbereidingEnabled) {
+    optionsPrice += PRICING.ROLLUIK_VOORBEREIDING_PRICE;
   }
   if (config.insectScreenEnabled) {
     const widths = config.windowWidths?.length === windowCopies
@@ -241,10 +261,13 @@ export function calculateStepPricing(config: WindowConfig) {
     widths.forEach((w, i) => {
       const wMeters = w / 1000;
       const screenPrice = Math.round(PRICING.EXTERNAL_SCREENS_PRICE * wMeters);
-      // console.log(`Screens Window ${i + 1} — width: ${wMeters.toFixed(2)} m × €${PRICING.EXTERNAL_SCREENS_PRICE}/m = €${screenPrice}`);
       totalScreensPrice += screenPrice;
+      // Somfy motor — same per-run logic as the rolluik.
+      const motorCount = Math.max(1, Math.ceil(w / PRICING.SOMFY_MOTOR_MAX_SPAN_MM));
+      totalScreensPrice += motorCount * PRICING.SOMFY_MOTOR_PRICE;
     });
-    // console.log(`Total Screens price: €${totalScreensPrice}`);
+    if (config.screensAfstandsbediening) totalScreensPrice += PRICING.AFSTANDSBEDIENING_PRICE;
+    if (config.screensMotorenKoppelen) totalScreensPrice += PRICING.MOTOREN_KOPPELEN_PRICE;
     optionsPrice += totalScreensPrice;
   }
   if (config.afvalAfvoerenEnabled) {
@@ -299,12 +322,54 @@ export function calculateStepPricing(config: WindowConfig) {
     optionsPrice += totalGlasroedenPrice;
   }
   if (config.tripleGlasEnabled) {
-    const totalTripleGlasPrice = PRICING.TRIPLE_GLAS_PRICE * windowCopies;
+    const widths = config.windowWidths?.length === windowCopies
+      ? config.windowWidths
+      : Array.from({ length: windowCopies }, () => windowWidth);
+    const tripleGlasAreaM2 = widths.reduce((sum, w) => sum + (w / 1000) * (effectiveHeight / 1000), 0);
+    const totalTripleGlasPrice = Math.round(PRICING.TRIPLE_GLAS_PRICE * tripleGlasAreaM2);
     optionsPrice += totalTripleGlasPrice;
   }
   if (config.kruiroeden4VaksEnabled) {
     const totalKruiroedenPrice = PRICING.KRUIRoeden_4_VAKS_PRICE * windowCopies;
     optionsPrice += totalKruiroedenPrice;
+  }
+  if (config.skgBeslagEnabled) {
+    // €58 per raam (window).
+    optionsPrice += PRICING.SKG_BESLAG_PRICE * windowCopies;
+  }
+  if (config.ventilatiestandEnabled) {
+    // €79 per raam — counted per tilt sash (draaikiepraam), the same pane
+    // pattern used for ventilation-box counting elsewhere in this file, but
+    // counting panes WITH a sash instead of without one.
+    const widths = config.windowWidths?.length === windowCopies
+      ? config.windowWidths
+      : Array.from({ length: windowCopies }, () => windowWidth);
+    let totalSashPanes = 0;
+    widths.forEach((w) => {
+      const copyPanelCount = w > 4100 ? 5 : w > 3450 ? 4 : w > 2100 ? 3 : w <= 1100 ? 1 : 2;
+      for (let p = 0; p < copyPanelCount; p++) {
+        const isFirst = p === 0;
+        const isLast = p === copyPanelCount - 1;
+        const isEven = p % 2 === 0;
+        const showSash = (
+          copyPanelCount === 1 ||
+          (copyPanelCount === 2 && isFirst) ||
+          (copyPanelCount === 3 && (isFirst || isLast)) ||
+          (copyPanelCount === 4 && (isFirst || isLast)) ||
+          (copyPanelCount >= 5 && isEven)
+        );
+        if (showSash) totalSashPanes++;
+      }
+    });
+    optionsPrice += PRICING.VENTILATIESTAND_PRICE * totalSashPanes;
+  }
+  if (config.vergunningService) {
+    // Vergunning laten regelen door PrefabXpert — one-off fee.
+    optionsPrice += PRICING.VERGUNNING_SERVICE_PRICE;
+  }
+  if (config.demountExisting) {
+    // Demontage bestaande dakkapel — one-off fee.
+    optionsPrice += PRICING.DEMONTAGE_OUDE_DAKKAPEL_PRICE;
   }
 
   // Roof slope pricing

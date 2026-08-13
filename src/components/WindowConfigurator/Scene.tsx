@@ -20,6 +20,11 @@ import { DormerScene } from "./TestModel";
 
 interface SceneProps {
   config: WindowConfig;
+  // Optional — when provided, ALL dormers are rendered side by side on the
+  // same roof, with the camera still focused on the active one. If omitted,
+  // behaves exactly as before (single dormer, matches old call sites).
+  dormers?: WindowConfig[];
+  activeDormerIndex?: number;
 }
 
 class SceneErrorBoundary extends Component<{ children: React.ReactNode }, { error: string | null }> {
@@ -40,14 +45,16 @@ class SceneErrorBoundary extends Component<{ children: React.ReactNode }, { erro
 }
 
 // Step number of "Dakbedekking en aansluiting" (Bitumen/EPDM + Lood/Loodvervanger).
-const DAKBEDEKKING_STEP = 8;
+// Shifted from 8 to 9 — a new "Daktrim" step was inserted as case 2, so
+// every step from the old case 2 onward moved up by one.
+const DAKBEDEKKING_STEP = 9;
 
 /** Smooth animated camera controller - zooms based on window count, resets on step change */
 function CameraController({ config }: { config: WindowConfig }) {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
   const prevStepRef = useRef(config.currentStep);
-  const prevCopiesRef = useRef(config.windowCopies);
+  const prevWidthMmRef = useRef(computeDormerWidthMm(config));
   const prevRoofCoveringRef = useRef(config.roofCovering);
   const animatingRef = useRef(false);
   const frameZoomRef = useRef<{ frameCenterX: number; frameWidth: number } | null>(null);
@@ -72,7 +79,17 @@ function CameraController({ config }: { config: WindowConfig }) {
   const targetPosRef = useRef(new THREE.Vector3(defaultX, defaultY, baseZ));
   const targetLookRef = useRef(new THREE.Vector3(-0.5580617264265286, isMobile ? -0.4 : -0.26438039392461765, -0.17671947803556104)); // user target
 
-  const getTargetZ = (copies: number) => baseZ + (copies - 1) * 2.5;
+  // Camera distance now scales with the dormer's REAL total width (mm),
+  // not just its window "copies" count — with the new dynamic penant
+  // feature, width can grow a lot faster than a flat per-copy increment
+  // accounted for (extra kozijnen AND extra penanten, each independently
+  // sized), which was leaving wider dormers too zoomed-in / cut off /
+  // off-center in frame.
+  const REFERENCE_WIDTH_MM = 190 * 2 + 1200; // baseZ's calibration: one default-width kozijn, no penant
+  const getWidthScale = (cfg: WindowConfig): number =>
+    Math.max(computeDormerWidthMm(cfg) / REFERENCE_WIDTH_MM, 1);
+
+  const getTargetZ = (widthScale: number) => baseZ + (widthScale - 1) * 3.5;
 
   // The normal front view used on step 5/6/7 etc. — same as the existing
   // "step >= 4" default, kept as a helper so the Bitumen/EPDM toggle can fall
@@ -96,7 +113,7 @@ function CameraController({ config }: { config: WindowConfig }) {
   // Listen for frame selection events from Step5Arrange
   useEffect(() => {
     const handleFrameSelected = (e: any) => {
-      if (config.currentStep === 6 && e.detail) {
+      if (config.currentStep === 7 && e.detail) {
         frameZoomRef.current = {
           frameCenterX: e.detail.frameCenterX,
           frameWidth: e.detail.frameWidth
@@ -112,17 +129,23 @@ function CameraController({ config }: { config: WindowConfig }) {
   useMemo(() => {
     if (config.currentStep !== prevStepRef.current) {
       prevStepRef.current = config.currentStep;
-      const z = getTargetZ(config.windowCopies);
+      const z = getTargetZ(getWidthScale(config));
       if (config.currentStep === 2) {
+        // Daktrim — simple front view (same treatment as the default
+        // fallback used for Type dakkapel), just showing the model plainly
+        // since this step is only choosing the roof-edge trim profile.
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
+        targetLookRef.current.set(0, 0, 0);
+      } else if (config.currentStep === 3) {
         // Positie dakkapel: front view, panned so the model clears the left
         // card (negative target X pushes the model to the right on screen).
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(isMobile ? 0 : -1.5, 0, 0);
-      } else if (config.currentStep === 3) {
+      } else if (config.currentStep === 4) {
         // Bekleding
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
         targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
-      } else if (config.currentStep === 4) {
+      } else if (config.currentStep === 5) {
         // Kleuren: slightly zoomed out and rotated, panned right so the
         // model clears the left card (same tilt/angle as before)
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
@@ -131,23 +154,27 @@ function CameraController({ config }: { config: WindowConfig }) {
         // Dakbedekking en aansluiting: this elevated aerial view applies for
         // the WHOLE step, no matter which option (Bitumen/EPDM, Lood/
         // Loodvervanger) is selected.
-        applyTopView(config.windowCopies);
+        applyTopView(getWidthScale(config));
+      } else if (config.currentStep === 8) {
+        // Breedte, kozijnen en blind paneel - front view to show frame widths.
+        // Only HALF the normal zoom-out growth is applied here (dampened),
+        // so wider configs (2/3 penanten) don't end up too zoomed out —
+        // panned further right and zoomed in more (desktop only)
+        const zDampened = baseZ + (z - baseZ) * 0.5;
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : zDampened - 0.5);
+        targetLookRef.current.set(isMobile ? 0 : -1.8, 0, 0);
       } else if (config.currentStep === 7) {
-        // Breedte, kozijnen en blind paneel - front view to show frame widths
-        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
-        targetLookRef.current.set(0, 0, 0);
-      } else if (config.currentStep === 6) {
         // Hoogte — straight front view so height/borstwering changes are clearly visible
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
         // Reset frame zoom when entering this step
         frameZoomRef.current = null;
-      } else if (config.currentStep === 5) {
+      } else if (config.currentStep === 6) {
         // De hellingshoek — same tilt as before, zoomed out and panned so it
         // clears the left card and sits toward the right of the viewport
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
-      } else if (config.currentStep >= 5) {
+      } else if (config.currentStep >= 6) {
         // Any remaining later step (e.g. Extra Opties): front view
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
@@ -160,29 +187,37 @@ function CameraController({ config }: { config: WindowConfig }) {
     }
   }, [config.currentStep]);
 
-  // Detect window copies change → zoom in/out, stay in front view
+  // Detect dormer width change (copies, kozijn widths, or penant widths) → zoom in/out, stay in front view
   useMemo(() => {
-    if (prevCopiesRef.current !== config.windowCopies) {
-      prevCopiesRef.current = config.windowCopies;
-      const z = getTargetZ(config.windowCopies);
+    const currentWidthMm = computeDormerWidthMm(config);
+    if (prevWidthMmRef.current !== currentWidthMm) {
+      prevWidthMmRef.current = currentWidthMm;
+      const z = getTargetZ(getWidthScale(config));
       // Keep current step's camera angle, only adjust Z for zoom
       if (config.currentStep === DAKBEDEKKING_STEP) {
-        applyTopView(config.windowCopies);
-      } else if (config.currentStep === 5) {
+        applyTopView(getWidthScale(config));
+      } else if (config.currentStep === 6) {
         // De hellingshoek keeps its tilted, zoomed-out, panned side view
         targetPosRef.current.set(isMobile ? defaultX : -9.7, isMobile ? defaultY : 0.5, isMobile ? baseZ : 0.2);
         targetLookRef.current.set(isMobile ? -0.558 : -0.4, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : -1.6);
-      } else if (config.currentStep === 2) {
+      } else if (config.currentStep === 3) {
         // Positie dakkapel keeps its front view panned away from the card
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(isMobile ? 0 : -1.5, 0, 0);
-      } else if (config.currentStep >= 5) {
+      } else if (config.currentStep === 8) {
+        // Breedte, kozijnen en blind paneel — same dampened-zoom/panned view
+        // as the step-change branch, so it stays consistent while adjusting
+        // widths (this block fires as widths/penanten change)
+        const zDampened = baseZ + (z - baseZ) * 0.5;
+        targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : zDampened - 0.5);
+        targetLookRef.current.set(isMobile ? 0 : -1.8, 0, 0);
+      } else if (config.currentStep >= 6) {
         targetPosRef.current.set(0, isMobile ? -0.3 : 0.5, isMobile ? z - 2.5 : z + 1);
         targetLookRef.current.set(0, 0, 0);
-      } else if (config.currentStep === 3) {
+      } else if (config.currentStep === 4) {
         targetPosRef.current.set(isMobile ? defaultX : -7.392371884077464, isMobile ? defaultY : 0.300510074387591, isMobile ? baseZ : 1.5107036698373193);
         targetLookRef.current.set(isMobile ? -0.558 : 0, isMobile ? -0.26 : -0.3, isMobile ? -0.177 : 0);
-      } else if (config.currentStep === 4) {
+      } else if (config.currentStep === 5) {
         targetPosRef.current.set(-6.5, isMobile ? 0.2 : 1.2, 3.5);
         targetLookRef.current.set(-1.5, -0.2, 0);
       } else {
@@ -192,7 +227,7 @@ function CameraController({ config }: { config: WindowConfig }) {
       }
       animatingRef.current = true;
     }
-  }, [config.windowCopies]);
+  }, [config.windowCopies, config.windowWidths, config.windowWidth, config.spacings]);
 
   // (No longer needed: the Dakbedekking step now uses one fixed aerial view
   // for the whole step regardless of Bitumen/EPDM or Lood/Loodvervanger
@@ -220,7 +255,7 @@ function CameraController({ config }: { config: WindowConfig }) {
     controls.enabled = false;
 
     // If frame zoom is active, calculate zoomed camera position
-    if (frameZoomRef.current && config.currentStep === 6) {
+    if (frameZoomRef.current && config.currentStep === 7) {
       const { frameCenterX, frameWidth } = frameZoomRef.current;
       // Convert mm to three.js units (divide by 1000)
       const centerX = frameCenterX / 1000;
@@ -316,9 +351,45 @@ export function getCameraLogger() {
   return cameraLoggerRef.current;
 }
 
-export function Scene({ config }: SceneProps) {
+// Same total-width formula used in pricing.ts / Step6BreedteKozijnen (fixed
+// side wall + kozijn widths + penant/spacing gaps), needed here purely to
+// lay multiple dormers out side by side without overlapping.
+const WANG_WIDTH_MM = 190;
+const DORMER_GAP_MM = 1000; // gap between adjacent dormers on the same roof
+
+function computeDormerWidthMm(cfg: WindowConfig): number {
+  const copies = Math.max(1, cfg.windowCopies ?? 1);
+  const widths = cfg.windowWidths?.length === copies
+    ? cfg.windowWidths
+    : Array.from({ length: copies }, () => cfg.windowWidth);
+  const spacingsSum = (cfg.spacings ?? []).slice(0, Math.max(0, copies - 1)).reduce((s, v) => s + v, 0);
+  return WANG_WIDTH_MM * 2 + widths.reduce((s, w) => s + w, 0) + spacingsSum;
+}
+
+/** X offset (meters) for each dormer so they sit side by side without
+ *  overlapping, with the ACTIVE dormer's offset shifted back to 0 — all the
+ *  hand-tuned camera positions above assume the edited dormer is at X=0, so
+ *  this keeps that true no matter which dormer is active or how many exist. */
+function computeDormerOffsetsM(dormers: WindowConfig[], activeIndex: number): number[] {
+  const widthsMm = dormers.map(computeDormerWidthMm);
+  const centersMm: number[] = [];
+  let cursor = 0;
+  widthsMm.forEach((w) => {
+    centersMm.push(cursor + w / 2);
+    cursor += w + DORMER_GAP_MM;
+  });
+  const activeCenterMm = centersMm[activeIndex] ?? 0;
+  return centersMm.map((c) => (c - activeCenterMm) / 1000);
+}
+
+export function Scene({ config, dormers, activeDormerIndex = 0 }: SceneProps) {
   useModelSync(config);
   const modelRef = useRef<THREE.Group>(null);
+
+  // Fall back to single-dormer behavior when the array isn't provided —
+  // keeps this a drop-in replacement for any existing <Scene config={...}/> usage.
+  const dormerList = dormers && dormers.length > 0 ? dormers : [config];
+  const offsetsM = computeDormerOffsetsM(dormerList, activeDormerIndex);
 
   // Triple-tap to log camera position (mobile)
   const tapCountRef = useRef(0);
@@ -384,7 +455,11 @@ export function Scene({ config }: SceneProps) {
           <Environment preset="apartment" background={false} />
           <SoftShadows size={30} samples={20} focus={0.6} />
           <group ref={modelRef}>
-            <DormerScene config={config} />
+            {dormerList.map((d, i) => (
+              <group key={i} position={[offsetsM[i], 0, 0]}>
+                <DormerScene config={d} />
+              </group>
+            ))}
           </group>
           <ContactShadows
             position={[0, -2.8, 0]}

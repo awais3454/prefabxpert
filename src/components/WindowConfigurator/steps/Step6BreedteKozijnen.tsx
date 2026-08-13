@@ -13,19 +13,19 @@ const KOZ_STEP = 50;
 const PEN_MIN = 200;
 const PEN_MAX = 4000;
 const PEN_STEP = 50;
+const WANG_MIN = 200;
+const WANG_MAX = 1000;
+const WANG_STEP = 10;
 
-// Fixed side wall (wang) width — not user-editable.
-const WANG_WIDTH = 190;
+// Default/fallback wang width — both Linkerwang and Rechterwang always share
+// this ONE value (adjusting either one changes both), read from
+// config.wangWidth now instead of being permanently fixed.
+const WANG_WIDTH_DEFAULT = 190;
 
-type ElementId = "linkerwang" | "kozijn1" | "penant" | "kozijn2" | "rechterwang";
+const MAX_PENANTEN = 3;
 
-const ELEMENTS: { id: ElementId; label: string }[] = [
-  { id: "linkerwang", label: "Linkerwang" },
-  { id: "kozijn1", label: "Kozijn 1" },
-  { id: "penant", label: "Penant" },
-  { id: "kozijn2", label: "Kozijn 2" },
-  { id: "rechterwang", label: "Rechterwang" },
-];
+type KozijnType = "kozijn" | "gesloten";
+type SashType = "draaikiep" | "vast";
 
 function Stepper({
   value, unit, min, max, step, onDec, onInc,
@@ -57,65 +57,131 @@ function Stepper({
 }
 
 export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
-  const [selected, setSelected] = useState<ElementId>("kozijn1");
+  // windowCopies IS the kozijn count — DormerGeometry.tsx already consumes
+  // windowCopies/windowWidths/spacings/kozijnTypes/etc generically for any
+  // count, so no other file needs to change for this. penantCount is simply
+  // derived from it (kozijnCount = penantCount + 1), no new config field
+  // needed.
+  const kozijnCount = Math.max(1, Math.min(MAX_PENANTEN + 1, config.windowCopies ?? 2));
+  const penantCount = kozijnCount - 1;
 
-  const widths: number[] = [config.windowWidths?.[0] ?? config.windowWidth, config.windowWidths?.[1] ?? config.windowWidth];
-  const penant: number = config.spacings?.[0] ?? 300;
-  const kozijnTypes: ("kozijn" | "gesloten")[] = config.kozijnTypes ?? ["kozijn", "kozijn"];
+  const widths: number[] = Array.from({ length: kozijnCount }, (_, i) =>
+    config.windowWidths?.[i] ?? config.windowWidth ?? 1200
+  );
+  const penants: number[] = Array.from({ length: penantCount }, (_, i) =>
+    config.spacings?.[i] ?? 300
+  );
+  const kozijnTypes: KozijnType[] = Array.from({ length: kozijnCount }, (_, i) =>
+    (config.kozijnTypes?.[i] as KozijnType) ?? "kozijn"
+  );
+  const panelCounts: number[] = Array.from({ length: kozijnCount }, (_, i) =>
+    config.kozijnPanelCounts?.[i] ?? 1
+  );
+  const sashTypes: SashType[] = Array.from({ length: kozijnCount }, (_, i) =>
+    (config.kozijnSashTypes?.[i] as SashType) ?? "draaikiep"
+  );
 
-  const updateWidth = (index: 0 | 1, value: number) => {
+  const wangWidth: number = config.wangWidth ?? WANG_WIDTH_DEFAULT;
+  const updateWangWidth = (value: number) => {
+    onChange({ ...config, wangWidth: value });
+  };
+
+  // Dynamic tab list — Linkerwang, Kozijn 1, [Penant 1, Kozijn 2, ...], Rechterwang
+  const elements = (() => {
+    const els: { id: string; label: string }[] = [{ id: "linkerwang", label: "Linkerwang" }];
+    for (let i = 0; i < kozijnCount; i++) {
+      els.push({ id: `kozijn${i}`, label: `Kozijn ${i + 1}` });
+      if (i < penantCount) els.push({ id: `penant${i}`, label: `Penant ${i + 1}` });
+    }
+    els.push({ id: "rechterwang", label: "Rechterwang" });
+    return els;
+  })();
+
+  const [selected, setSelected] = useState<string>("kozijn0");
+  // If the currently-selected tab no longer exists (e.g. penant count went
+  // down), fall back to the first kozijn instead of showing a blank panel.
+  const activeSelected = elements.some((e) => e.id === selected) ? selected : "kozijn0";
+
+  const updatePenantCount = (newCount: number) => {
+    const newKozijnCount = newCount + 1;
+    // Resize every per-kozijn/per-penant array, preserving existing values
+    // for indices that still exist and filling new ones with sensible
+    // defaults — nothing the user already configured gets lost.
+    const newWidths = Array.from({ length: newKozijnCount }, (_, i) => widths[i] ?? config.windowWidth ?? 1200);
+    const newPenants = Array.from({ length: newCount }, (_, i) => penants[i] ?? 300);
+    const newTypes = Array.from({ length: newKozijnCount }, (_, i) => kozijnTypes[i] ?? "kozijn");
+    const newPanelCounts = Array.from({ length: newKozijnCount }, (_, i) => panelCounts[i] ?? 1);
+    const newSashTypes = Array.from({ length: newKozijnCount }, (_, i) => sashTypes[i] ?? "draaikiep");
+    const newPaneSashTypes = Array.from({ length: newKozijnCount }, (_, i) => config.kozijnPaneSashTypes?.[i] ?? []);
+
+    onChange({
+      ...config,
+      windowCopies: newKozijnCount,
+      windowWidths: newWidths,
+      windowWidth: newWidths[0],
+      spacings: newPenants,
+      kozijnTypes: newTypes,
+      kozijnPanelCounts: newPanelCounts,
+      kozijnSashTypes: newSashTypes,
+      kozijnPaneSashTypes: newPaneSashTypes as any,
+    });
+    setSelected("kozijn0");
+  };
+
+  const updateWidth = (index: number, value: number) => {
     const next = [...widths];
     next[index] = value;
     onChange({ ...config, windowWidths: next, windowWidth: next[0] });
   };
 
-  const updatePenant = (value: number) => {
-    onChange({ ...config, spacings: [value] });
+  const updatePenantWidth = (index: number, value: number) => {
+    const next = [...penants];
+    next[index] = value;
+    onChange({ ...config, spacings: next });
   };
 
-  const updateKozijnType = (index: 0 | 1, type: "kozijn" | "gesloten") => {
-    const next = [...kozijnTypes] as ("kozijn" | "gesloten")[];
+  const updateKozijnType = (index: number, type: KozijnType) => {
+    const next = [...kozijnTypes];
     next[index] = type;
-    onChange({ ...config, kozijnTypes: next });
+    onChange({ ...config, kozijnTypes: next as any });
   };
 
-  const panelCounts: number[] = [config.kozijnPanelCounts?.[0] ?? 1, config.kozijnPanelCounts?.[1] ?? 1];
-  const updatePanelCount = (index: 0 | 1, count: number) => {
-    const next = [...(config.kozijnPanelCounts ?? [null, null])];
+  const updatePanelCount = (index: number, count: number) => {
+    const next = [...panelCounts];
     next[index] = count;
     onChange({ ...config, kozijnPanelCounts: next });
   };
 
-  const sashTypes: ("draaikiep" | "vast")[] = config.kozijnSashTypes ?? ["draaikiep", "draaikiep"];
-  const updateSashType = (index: 0 | 1, type: "draaikiep" | "vast") => {
-    const next = [...sashTypes] as ("draaikiep" | "vast")[];
+  const updateSashType = (index: number, type: SashType) => {
+    const next = [...sashTypes];
     next[index] = type;
-    onChange({ ...config, kozijnSashTypes: next });
+    onChange({ ...config, kozijnSashTypes: next as any });
   };
 
   // Per-pane sash types (used when a kozijn has 2 or 3 vakken, so each
   // individual pane can independently be draai-/kiepraam or vast raam).
-  const getPaneSashTypes = (index: 0 | 1, count: number): ("draaikiep" | "vast")[] => {
+  const getPaneSashTypes = (index: number, count: number): SashType[] => {
     const existing = config.kozijnPaneSashTypes?.[index] ?? [];
-    const result: ("draaikiep" | "vast")[] = [];
+    const result: SashType[] = [];
     for (let p = 0; p < count; p++) {
-      result.push(existing[p] ?? (p === 0 ? "draaikiep" : "vast"));
+      result.push((existing[p] as SashType) ?? (p === 0 ? "draaikiep" : "vast"));
     }
     return result;
   };
-  const updatePaneSashType = (index: 0 | 1, paneIdx: number, type: "draaikiep" | "vast", count: number) => {
+  const updatePaneSashType = (index: number, paneIdx: number, type: SashType, count: number) => {
     const current = getPaneSashTypes(index, count);
     current[paneIdx] = type;
-    const nextAll = [config.kozijnPaneSashTypes?.[0] ?? [], config.kozijnPaneSashTypes?.[1] ?? []];
+    const nextAll = Array.from({ length: kozijnCount }, (_, i) => config.kozijnPaneSashTypes?.[i] ?? []);
     nextAll[index] = current;
-    onChange({ ...config, kozijnPaneSashTypes: nextAll as ("draaikiep" | "vast")[][] });
+    onChange({ ...config, kozijnPaneSashTypes: nextAll as any });
   };
 
-  // Total width: 2x wang (fixed) + kozijn1 + penant + kozijn2
-  const totalWidth = WANG_WIDTH * 2 + widths[0] + penant + widths[1];
+  // Total width: 2x wang (shared, adjustable) + all kozijnen + all penanten
+  const totalWidth = wangWidth * 2
+    + widths.reduce((s, w) => s + w, 0)
+    + penants.reduce((s, p) => s + p, 0);
 
-  const renderKozijnPanel = (index: 0 | 1) => {
-    const label = index === 0 ? "Kozijn 1" : "Kozijn 2";
+  const renderKozijnPanel = (index: number) => {
     const width = widths[index];
     const type = kozijnTypes[index];
 
@@ -186,7 +252,7 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
 
             {panelCounts[index] === 1 ? (
               <>
-                {/* Single pane — one Type raam choice for the whole kozijn (unchanged) */}
+                {/* Single pane — one Type raam choice for the whole kozijn */}
                 <span className="text-[13px] font-semibold text-[#6E94B0] text-center mt-2">Type raam</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -251,58 +317,88 @@ export function Step6BreedteKozijnen({ config, onChange }: StepProps) {
   };
 
   const renderContent = () => {
-    switch (selected) {
-      case "linkerwang":
-      case "rechterwang":
-        return (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <span className="text-[15px] font-black text-[#6E94B0]">
-              {selected === "linkerwang" ? "Linkerwang" : "Rechterwang"}
-            </span>
-            <div className="text-[17px] font-black text-[#6E94B0]">{WANG_WIDTH} mm</div>
-            <p className="text-[12px] text-[#6E94B0]/80 text-center max-w-[260px]">
-              Vaste breedte van {WANG_WIDTH} mm. Deze zijwang kan niet worden verwijderd of kleiner gemaakt, en wordt automatisch meegerekend in de totale breedte.
-            </p>
-          </div>
-        );
-      case "kozijn1":
-        return renderKozijnPanel(0);
-      case "penant":
-        return (
-          <div className="flex flex-col gap-3 py-2">
-            <span className="text-[13px] font-semibold text-[#6E94B0] text-center">Breedte penant</span>
-            <Stepper
-              value={penant}
-              unit="mm"
-              min={PEN_MIN}
-              max={PEN_MAX}
-              step={PEN_STEP}
-              onDec={() => updatePenant(Math.max(PEN_MIN, penant - PEN_STEP))}
-              onInc={() => updatePenant(Math.min(PEN_MAX, penant + PEN_STEP))}
-            />
-          </div>
-        );
-      case "kozijn2":
-        return renderKozijnPanel(1);
-      default:
-        return null;
+    if (activeSelected === "linkerwang" || activeSelected === "rechterwang") {
+      return (
+        <div className="flex flex-col gap-3 py-2">
+          <span className="text-[15px] font-black text-[#6E94B0] text-center">
+            {activeSelected === "linkerwang" ? "Linkerwang" : "Rechterwang"}
+          </span>
+          <Stepper
+            value={wangWidth}
+            unit="mm"
+            min={WANG_MIN}
+            max={WANG_MAX}
+            step={WANG_STEP}
+            onDec={() => updateWangWidth(Math.max(WANG_MIN, wangWidth - WANG_STEP))}
+            onInc={() => updateWangWidth(Math.min(WANG_MAX, wangWidth + WANG_STEP))}
+          />
+          <p className="text-[12px] text-[#6E94B0]/80 text-center max-w-[260px] mx-auto">
+            Minimale breedte {WANG_MIN} mm. Linker- en rechterwang hebben altijd dezelfde breedte — het aanpassen van de ene kant past ook de andere kant aan.
+          </p>
+        </div>
+      );
     }
+    if (activeSelected.startsWith("kozijn")) {
+      const idx = parseInt(activeSelected.replace("kozijn", ""), 10);
+      return renderKozijnPanel(idx);
+    }
+    if (activeSelected.startsWith("penant")) {
+      const idx = parseInt(activeSelected.replace("penant", ""), 10);
+      const value = penants[idx];
+      return (
+        <div className="flex flex-col gap-3 py-2">
+          <span className="text-[13px] font-semibold text-[#6E94B0] text-center">Breedte penant {idx + 1}</span>
+          <Stepper
+            value={value}
+            unit="mm"
+            min={PEN_MIN}
+            max={PEN_MAX}
+            step={PEN_STEP}
+            onDec={() => updatePenantWidth(idx, Math.max(PEN_MIN, value - PEN_STEP))}
+            onInc={() => updatePenantWidth(idx, Math.min(PEN_MAX, value + PEN_STEP))}
+          />
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <div className="flex flex-col flex-1 px-4 pt-2 pb-4 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
-      {/* Element selector — fixed left-to-right order. Uses a 5-column grid
-          (instead of a horizontally-scrolling row) so all 5 tabs, including
-          "Rechterwang", are always fully visible on mobile without being cut
-          off or needing a scroll — each tab just takes exactly 1/5 width. */}
-      <div className="grid grid-cols-5 gap-1 mb-3">
-        {ELEMENTS.map((el) => {
-          const isActive = selected === el.id;
+      {/* Aantal penanten — determines how many kozijnen/penanten exist */}
+      <div className="mb-4">
+        <span className="text-[13px] font-semibold text-[#6E94B0] text-center block mb-2">Aantal penanten</span>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[0, 1, 2, 3].map((n) => (
+            <button
+              key={n}
+              onClick={() => updatePenantCount(n)}
+              className={`rounded-[10px] border py-[10px] text-[12px] font-black tracking-tight transition-all duration-200 ${
+                penantCount === n
+                  ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
+                  : "border-[#6E94B0]/25 bg-white text-[#6E94B0] hover:border-[#6E94B0]/40"
+              }`}
+            >
+              {n === 0 ? "Geen" : `${n} penant${n > 1 ? "en" : ""}`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Element selector — the number of tabs is dynamic (3 to 9 depending
+          on Aantal penanten), so this scrolls horizontally rather than
+          forcing a fixed grid that would get unreadably narrow with more
+          items. */}
+      <div className="flex flex-wrap items-center justify-center gap-1 mb-3">
+        {elements.map((el) => {
+          const isActive = activeSelected === el.id;
           return (
             <button
               key={el.id}
               onClick={() => setSelected(el.id)}
-              className={`rounded-[6px] border px-0.5 py-1.5 text-[8px] leading-tight font-black tracking-tight text-center transition-all duration-200 ${
+              className={`flex-shrink-0 rounded-[8px] border whitespace-nowrap transition-all duration-200 font-black tracking-tight ${
+                elements.length > 7 ? "px-1.5 py-1 text-[9px]" : elements.length > 5 ? "px-2 py-1.5 text-[10px]" : "px-2.5 py-1.5 text-[11px]"
+              } ${
                 isActive
                   ? "border-[#6E94B0] bg-[#6E94B0]/15 text-[#6E94B0]"
                   : "border-[#6E94B0]/20 bg-white text-[#6E94B0]/70 hover:border-[#6E94B0]/40"

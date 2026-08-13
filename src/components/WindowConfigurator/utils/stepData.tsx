@@ -2,6 +2,7 @@ import React from 'react';
 
 export const STEP_LABELS = [
   "Type dakkapel",
+  "Daktrim",
   "Positie dakkapel",
   "Bekleding",
   "Kleuren",
@@ -15,14 +16,15 @@ export const STEP_LABELS = [
 export function getSubtitle(currentStep: number): string {
   switch (currentStep) {
     case 1: return "Welk model heeft uw voorkeur?";
-    case 2: return "Waar moet de dakkapel geplaatst worden op uw woning?";
-    case 3: return "Kies het materiaal van de dakkapel";
-    case 4: return "Kies de kleuren van de dakkapel.";
-    case 5: return "Gebruik deze ontwerp tool via de telefoon om de graden te meten.";
-    case 6: return "Hoe hoog moet uw dakkapel worden? Wilt u nog een blindpaneel onder uw kozijnen?";
-    case 7: return "Stel de breedte, kozijnen en penanten afzonderlijk in.";
-    case 8: return "Kies de dakbedekking en de aansluiting op het pannendak.";
-    case 9: return "Maak de dakkapel compleet met extra opties.";
+    case 2: return "Kies het gewenste profiel voor de daktrim.";
+    case 3: return "Waar moet de dakkapel geplaatst worden op uw woning?";
+    case 4: return "Kies het materiaal van de dakkapel";
+    case 5: return "Kies de kleuren van de dakkapel.";
+    case 6: return "Gebruik deze ontwerp tool via de telefoon om de graden te meten.";
+    case 7: return "Hoe hoog moet uw dakkapel worden? Wilt u nog een blindpaneel onder uw kozijnen?";
+    case 8: return "Stel de breedte, kozijnen en penanten afzonderlijk in.";
+    case 9: return "Kies de dakbedekking en de aansluiting op het pannendak.";
+    case 10: return "Maak de dakkapel compleet met extra opties.";
     default: return "Selecteer de gewenste optie voor uw dakkapel.";
   }
 }
@@ -35,14 +37,15 @@ export interface DialogInfo {
 export function getDialogContent(currentStep: number): DialogInfo {
   const dialogStepMap: Record<number, number> = {
     1: 1,
-    2: 11,
-    3: 7,
-    4: 9,
-    5: 2,
-    6: 3,
-    7: 12,
-    8: 8,
-    9: 10,
+    2: 13,
+    3: 11,
+    4: 7,
+    5: 9,
+    6: 2,
+    7: 3,
+    8: 12,
+    9: 8,
+    10: 10,
   };
   currentStep = dialogStepMap[currentStep] ?? currentStep;
   switch (currentStep) {
@@ -51,7 +54,7 @@ export function getDialogContent(currentStep: number): DialogInfo {
         title: "Extra informatie dakkapel types",
         content: (
           <div className="space-y-4">
-            <p className="text-[17px] text-[#6E94B0] leading-relaxed font-bold">
+            <p className="text-[17px] text-black leading-relaxed font-bold">
               De traditionele dakkapel is de meest gekozen dakkapel: tijdloos en perfect passend bij verscheidene bouwstijlen.
             </p>
             <p className="text-[17px] text-[#6E94B0] leading-relaxed font-medium">
@@ -119,6 +122,9 @@ export function getDialogContent(currentStep: number): DialogInfo {
             </p>
             <p className="text-[17px] leading-relaxed">
               <span className="font-extrabold text-[#6E94B0]">Borstwering:</span> Een borstwering is een extra dicht paneel onder het raam. Dit element wordt vaak gebruikt om meer loopruimte te creëren.
+            </p>
+            <p className="text-[17px] leading-relaxed">
+              <span className="font-extrabold text-[#6E94B0]">Let op:</span> Hoger dan 1750 mm is vergunningsplichtig. Neem contact op voor advies.
             </p>
           </div>
         )
@@ -199,17 +205,45 @@ export function getDialogContent(currentStep: number): DialogInfo {
         content: (
           <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
             <p className="text-[15px] leading-relaxed">
-              De zijkanten van de dakkapel worden standaard uitgevoerd met Keralit rabatpanelen.
+              De zijkanten van de dakkapel worden standaard uitgevoerd met Keralit rabatsponningdelen.
             </p>
             <p className="text-[15px] leading-relaxed">
-              Voor de voorzijde kunt u kiezen uit Keralit rabatstroken, een gladde afwerking met boeidelen of composiet met smalle verticale delen. De afbeelding van de dakkapel wordt automatisch aangepast aan uw keuze.
+              Er zijn 3 opties voor de bekleding:
             </p>
-            <p className="text-[15px] leading-relaxed">
-              Keralit rabatpanelen zijn verkrijgbaar in verschillende profielhoogtes en kleuren. De beschikbare mogelijkheden zijn afhankelijk van de gekozen uitvoering.
-            </p>
-            <p className="text-[15px] leading-relaxed">
-              Liever een houten, aluminium of zinken afwerking? Neem dan contact met ons op. Wij bespreken graag de mogelijkheden met u.
-            </p>
+            <ul className="space-y-3">
+              <li className="text-[15px] leading-relaxed flex items-start gap-2 pl-4">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
+                <span className="font-extrabold text-[#6E94B0]">HPL</span>
+              </li>
+              <li className="text-[15px] leading-relaxed flex flex-col gap-2 pl-4">
+                <div className="flex items-start gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
+                  <span className="font-extrabold text-[#6E94B0]">Keralit</span>
+                </div>
+                <span className="pl-4">Bij Keralit zijn er twee mogelijkheden:</span>
+                <div className="pl-4 flex flex-col gap-2">
+                  <div className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/40 mt-2 flex-shrink-0" />
+                    <span>
+                      <span className="font-bold text-[#6E94B0]">Gladde voorzijde</span> — Keralit kan bij een gladde voorzijde zowel horizontaal als verticaal geplaatst worden.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/40 mt-2 flex-shrink-0" />
+                    <span>
+                      <span className="font-bold text-[#6E94B0]">Rabat profiel</span> — Rabat profiel wordt altijd horizontaal geplaatst.
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li className="text-[15px] leading-relaxed flex flex-col gap-2 pl-4">
+                <div className="flex items-start gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-[#6E94B0]/50 mt-2 flex-shrink-0" />
+                  <span className="font-extrabold text-[#6E94B0]">Composiet</span>
+                </div>
+                <span className="pl-4">Composiet wordt verticaal geplaatst.</span>
+              </li>
+            </ul>
           </div>
         )
       };
@@ -295,6 +329,23 @@ export function getDialogContent(currentStep: number): DialogInfo {
             </ul>
             <p className="text-[15px] leading-relaxed">
               Klik op een onderdeel bovenaan om alleen de instellingen van dat onderdeel te bekijken en aan te passen. De totale breedte wordt automatisch berekend.
+            </p>
+          </div>
+        )
+      };
+    case 13:
+      return {
+        title: "Extra informatie daktrim",
+        content: (
+          <div className="space-y-4 text-[#6E94B0] font-medium pb-2">
+            <p className="text-[15px] leading-relaxed">
+              De daktrim is de afwerking die direct op de boei geplaatst wordt, op de overgang tussen het dak en de dakkapel.
+            </p>
+            <p className="text-[15px] leading-relaxed">
+              <span className="font-extrabold text-[#6E94B0]">Daktrim:</span> een strakke, platte afwerking.
+            </p>
+            <p className="text-[15px] leading-relaxed">
+              <span className="font-extrabold text-[#6E94B0]">Dakkraal:</span> een ronde aluminium afwerking.
             </p>
           </div>
         )

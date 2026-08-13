@@ -1,5 +1,5 @@
 export type StyleType = "traditional" | "kader";
-export type CladdingMaterial = "rondkantpanelen" | "hpl";
+export type CladdingMaterial = "rondkantpanelen" | "hpl" | "composiet";
 
 export interface WindowConfig {
   // Navigation
@@ -18,6 +18,8 @@ export interface WindowConfig {
   windowCopies: number;  // 1–5
   spacings: number[];    // mm — penanten between adjacent kopijnen (length = windowCopies-1), 200–4000
   wallSideOffset: number; // mm — margin around window envelope on all 4 sides
+  wangWidth?: number;    // mm — Linkerwang/Rechterwang width, shared by both sides, min 200
+  trimType?: "daktrim" | "dakkraal"; // Roof edge trim profile — flat (daktrim) or round aluminum (dakkraal)
 
   // Style & Cladding
   styleType: StyleType;
@@ -84,6 +86,13 @@ export interface WindowConfig {
   screenlineEnabled?: boolean;
   skgBeslagEnabled?: boolean;
   ventilatiestandEnabled?: boolean;
+  // Ingebouwde rolluik met Somfy motoren — sub-options
+  rolluikVoorbereidingEnabled?: boolean;
+  rolluikAfstandsbediening?: boolean;
+  rolluikMotorenKoppelen?: boolean;
+  // Screens — same Somfy sub-options
+  screensAfstandsbediening?: boolean;
+  screensMotorenKoppelen?: boolean;
   // Step 10: Position
   dormerPosition: "voorzijde" | "achterzijde" | "linkerkant" | "rechterkant";
   demountExisting: boolean;
@@ -113,6 +122,8 @@ export const DEFAULT_CONFIG: WindowConfig = {
   windowCopies: 2,
   spacings: [300],
   wallSideOffset: 0,
+  wangWidth: 190,
+  trimType: "daktrim",
   styleType: "traditional",
   claddingMaterial: "rondkantpanelen",
   frontColor: "#F7F9EF", // RAL 9010 Wit
@@ -124,7 +135,8 @@ export const DEFAULT_CONFIG: WindowConfig = {
   roofOffset: 150,
   pitchDeg: 35,
   roofCovering: "bitumen",
-  roofConnection: "lood",
+  // roofConnection: "lood",
+  roofConnection: "loodvervanger",
   roofTileColor: "antraciet",
   pitchUnknown: false,
   shutterColor: "#F7F9EF",
@@ -163,6 +175,11 @@ export const DEFAULT_CONFIG: WindowConfig = {
   screenlineEnabled: false,
   skgBeslagEnabled: false,
   ventilatiestandEnabled: false,
+  rolluikVoorbereidingEnabled: false,
+  rolluikAfstandsbediening: false,
+  rolluikMotorenKoppelen: false,
+  screensAfstandsbediening: false,
+  screensMotorenKoppelen: false,
   // Step 10: Position
   dormerPosition: "achterzijde",
   demountExisting: false,

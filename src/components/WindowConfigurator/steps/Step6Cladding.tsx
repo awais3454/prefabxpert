@@ -14,7 +14,12 @@ export function Step6Cladding({ config, onChange }: StepProps) {
     {
       id: "rondkantpanelen",
       title: "Rabatprofiel",
-      description: "De voorzijde krijgt dezelfde rabatstrepen als de zijwangen van de dakkapel, voor een traditionele, samenhangende uitstraling.",
+      description: "De voorzijde krijgt dezelfde rabatsponningdelen als de zijwangen van de dakkapel, voor een traditionele, samenhangende uitstraling.",
+    },
+    {
+      id: "composiet",
+      title: "Composiet",
+      description: "Smalle verticale delen voor een strakke, moderne uitstraling. Composiet wordt altijd verticaal geplaatst.",
     }
   ];
 

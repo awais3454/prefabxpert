@@ -94,6 +94,21 @@ function createWoodMaterial(
 
 const CLAD_TILE_MM = 850
 
+// Used ONLY for the narrow Composiet strips (window reveal left/right,
+// penanten, side cheeks) — front/bottom/top/ClosedPanel keep using
+// CLAD_TILE_MM exactly as before (untouched, since that's already correct).
+// Narrow strips are often narrower than one full CLAD_TILE_MM board
+// division, so no line could ever fit inside them — this smaller reference
+// guarantees several visible lines on even the narrowest strip.
+const COMPOSIET_TILE_MM_NARROW = 80
+
+// Used specifically for FrontWall's own window-reveal left/right strip —
+// the full COMPOSIET_TILE_MM_NARROW made this strip's lines too densely
+// packed right where it meets the (also narrow-tiled) SideCheek, creating
+// a busy/mismatched cluster at that corner. A larger, in-between tile
+// keeps some visible lines there without being as dense.
+const COMPOSIET_TILE_MM_MEDIUM = 850
+
 /** Fine-tune knob: shifts the FrontWall strip lines up/down (in mm) relative
  *  to their calculated world-space position, to nudge them into exact
  *  alignment with the SideCheek lines if they're still slightly off.
@@ -104,6 +119,18 @@ function claddingRepeatV(heightM: number) {
   return Math.max(heightM / mm(CLAD_TILE_MM), 0.25)
 }
 
+// Composiet cladding runs VERTICALLY (narrow vertical boards) instead of the
+// horizontal Rabatprofiel lines — this is the width-based equivalent of
+// claddingRepeatV, used to tile vertical-line textures across a strip's width.
+function claddingRepeatU(widthM: number, tileMM: number = CLAD_TILE_MM) {
+  return Math.max(widthM / mm(tileMM), 0.25)
+}
+
+// Default side wall (wang) width — used as a fallback wherever a component
+// isn't explicitly given a sideW prop. The actual value now comes from
+// config.wangWidth (both wangen share this one value), threaded through as
+// a "sideW" prop to every component below that used to reference this
+// constant directly.
 const SIDE_W       = mm(190)
 const FRONT_T      = mm(140)
 const FASCIA_H     = mm(150)
@@ -115,22 +142,38 @@ const FLOOR_PANEL  = mm(40)
 
 const ROOF_OVERHANG = mm(220)
 const ROOF_SIDE_OVH = mm(80)
+// Caps how far the roof tile plane extends sideways beyond each dormer's
+// own footprint. Previously this scaled with window width with no upper
+// bound, which meant two adjacent dormers (placed with a ~1000mm gap in
+// Scene.tsx for multi-dormer rendering) could have their roof tile planes
+// overlap and z-fight/flicker for wide windows. Capping it at 450mm keeps
+// each side safely under half the gap (450+450=900mm < 1000mm), while
+// staying visually the same for narrower dormers where the uncapped value
+// was already below this limit.
+// Caps how far the roof tile plane extends sideways beyond each dormer's
+// own footprint. This MUST equal exactly half of Scene.tsx's DORMER_GAP_MM
+// (currently 1000mm) — 500+500=1000mm means two adjacent dormers' roof
+// planes meet EXACTLY at the midpoint between them: no overlap (which
+// z-fights/flickers) and no gap (which showed as a dark wedge/notch cut
+// into the roof where nothing was drawn). The earlier 450mm value was too
+// small (450+450=900mm < 1000mm gap), leaving a 100mm strip uncovered.
+const MAX_ROOF_SIDE_EXT = mm(500)
 const ROOF_SLAB_T   = mm(220)
 const ROOF_FSC_H    = mm(160)
 const ROOF_FSC_T    = mm(40)
 
-export function makeCheekGeom(H: number, D: number): THREE.BufferGeometry {
+export function makeCheekGeom(H: number, D: number, sideW: number = SIDE_W): THREE.BufferGeometry {
   const positions = new Float32Array([
-    0,      0, 0,   SIDE_W, 0, 0,   0,      H, 0,
-    SIDE_W, 0, 0,   SIDE_W, H, 0,   0,      H, 0,
-    0,      H,  0,   SIDE_W, H,  0,   0,      H, -D,
-    SIDE_W, H,  0,   SIDE_W, H, -D,   0,      H, -D,
-    0,      0, 0,   0,      H, -D,   SIDE_W, 0,  0,
-    SIDE_W, 0, 0,   0,      H, -D,   SIDE_W, H, -D,
+    0,      0, 0,   sideW, 0, 0,   0,      H, 0,
+    sideW, 0, 0,   sideW, H, 0,   0,      H, 0,
+    0,      H,  0,   sideW, H,  0,   0,      H, -D,
+    sideW, H,  0,   sideW, H, -D,   0,      H, -D,
+    0,      0, 0,   0,      H, -D,   sideW, 0,  0,
+    sideW, 0, 0,   0,      H, -D,   sideW, H, -D,
     0, 0,  0,   0, H,  0,   0, H, -D,
-    SIDE_W, 0,  0,   SIDE_W, H, -D,   SIDE_W, H, 0,
+    sideW, 0,  0,   sideW, H, -D,   sideW, H, 0,
   ])
-  const sw = SIDE_W
+  const sw = sideW
   const uvs = new Float32Array([
     0, 0,   sw/sw, 0,   0, 1,
     sw/sw, 0,   sw/sw, 1,   0, 1,
@@ -218,7 +261,7 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   winW?: number; winH?: number; winYBottom?: number;
   subWinWs?: number[]; penantWs?: number[];
   styleType?: 'traditional' | 'kader';
-  claddingMaterial?: 'rondkantpanelen' | 'hpl';
+  claddingMaterial?: 'rondkantpanelen' | 'hpl' | 'composiet';
 }) {
   const animatedColor = useAnimatedColor(color, 0.25)
   const outerMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, color }))
@@ -236,13 +279,20 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   }, [woodCol, woodRgh, woodNrm])
 
   const isTraditional = styleType === 'traditional'
-  const showCladding = isTraditional && claddingMaterial !== 'hpl'
+  // Rabatprofiel = horizontal lines (unchanged from before). Composiet =
+  // narrow VERTICAL boards — same visual technique, transposed axis.
+  const showHorizontal = isTraditional && claddingMaterial === 'rondkantpanelen'
+  const showVertical    = isTraditional && claddingMaterial === 'composiet'
+  const showCladding = showHorizontal || showVertical
 
   const hasWin = !!(winW && winH)
   const yBot   = hasWin ? (winYBottom ?? (H - (winH as number)) / 2) : 0
   const botH   = hasWin ? yBot : H
   const topH   = hasWin ? H - yBot - (winH as number) : 0
 
+  // Shared canvas generator for both orientations — draws either horizontal
+  // rows (Rabatprofiel) or vertical columns (Composiet) of dark lines on a
+  // light base, at the same 64px spacing either way.
   const claddingLinesTex = useMemo(() => {
     if (!showCladding) return null
     const canvas = document.createElement('canvas')
@@ -251,34 +301,36 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
     if (ctx) {
       ctx.fillStyle = '#c8c8c8'
       ctx.fillRect(0, 0, 256, 256)
-      for (let y = 0; y <= 256; y += 64) {
-        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
-        ctx.lineWidth = 6
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+      ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+      ctx.lineWidth = 6
+      if (showVertical) {
+        for (let x = 0; x <= 256; x += 64) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
+        }
+      } else {
+        for (let y = 0; y <= 256; y += 64) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+        }
       }
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    // Anisotropic filtering — without this, the narrow side/penant strips
-    // (which compress the same texture into less on-screen width) mipmap
-    // down and blur, while the wide center strip stays crisp. Raising
-    // anisotropy keeps the lines equally sharp everywhere.
+    // Anisotropic filtering — without this, narrow strips (which compress
+    // the same texture into less on-screen width/height) mipmap down and
+    // blur, while wider strips stay crisp. Raising anisotropy keeps the
+    // lines equally sharp everywhere.
     tex.anisotropy = 16
     tex.generateMipmaps = false
     tex.minFilter = THREE.LinearFilter
     return tex
-  }, [showCladding])
+  }, [showCladding, showVertical])
 
   const cladTexs = useMemo(() => {
-    // Each strip's texture previously started its own pattern at v=0
-    // regardless of where that strip actually sits in world space — so a
-    // strip starting higher up (like the top strip, or the side/penant
-    // strips at winCY) showed lines at the wrong world height compared to
-    // the SideCheek (which is one continuous surface starting at Y=0).
-    // Offsetting by each strip's real bottom-Y (in the same CLAD_TILE_MM
-    // units used by claddingRepeatV) keeps every strip's lines in the same
-    // world-space phase as the side cheeks.
-    const make = (h: number, yBottom: number = 0) => {
+    // HORIZONTAL (Rabatprofiel): each strip's texture is offset in Y based
+    // on its real world bottom-Y, so lines stay in phase with the
+    // SideCheek's continuous surface (which starts at Y=0) regardless of
+    // which strip they're on.
+    const makeHorizontal = (h: number, yBottom: number = 0) => {
       if (!claddingLinesTex || h <= 0) return null
       const t = claddingLinesTex.clone()
       t.repeat.set(1, claddingRepeatV(h))
@@ -287,26 +339,101 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
       t.needsUpdate = true
       return t
     }
-    return {
-      full:   make(H, 0),
-      bottom: make(botH, 0),
-      top:    make(topH, yBot + winH),
-      side:   make(hasWin ? (winH as number) : 0, yBot),
+    // VERTICAL (Composiet): same idea, but phase-aligned by each strip's
+    // real world LEFT-edge X instead of its bottom-Y, since the boards run
+    // vertically — this keeps the vertical board seams lining up across
+    // strip boundaries (bottom/top/left/right/penanten) instead of each
+    // strip restarting its own pattern at x=0.
+    const makeVertical = (w: number, xLeft: number = 0, tileMM: number = CLAD_TILE_MM) => {
+      if (!claddingLinesTex || w <= 0) return null
+      const t = claddingLinesTex.clone()
+      t.repeat.set(claddingRepeatU(w, tileMM), 1)
+      const rawOffset = xLeft / mm(tileMM)
+      t.offset.x = ((rawOffset % 1) + 1) % 1
+      t.needsUpdate = true
+      return t
     }
-  }, [claddingLinesTex, H, botH, topH, winH, hasWin, yBot])
+
+    if (showVertical) {
+      const halfW = W / 2
+      const sideWLocal = hasWin ? (W - (winW as number)) / 2 : 0
+      return {
+        full:   makeVertical(W, -halfW),
+        bottom: makeVertical(W, -halfW),
+        top:    makeVertical(W, -halfW),
+        left:   makeVertical(sideWLocal, -((winW ?? 0) / 2 + sideWLocal), COMPOSIET_TILE_MM_MEDIUM),
+        right:  makeVertical(sideWLocal, (winW ?? 0) / 2, COMPOSIET_TILE_MM_MEDIUM),
+      }
+    }
+    return {
+      full:   makeHorizontal(H, 0),
+      bottom: makeHorizontal(botH, 0),
+      top:    makeHorizontal(topH, yBot + (winH ?? 0)),
+      side:   makeHorizontal(hasWin ? (winH as number) : 0, yBot),
+    }
+  }, [claddingLinesTex, showVertical, W, H, botH, topH, winH, winW, hasWin, yBot])
 
   const cladFullRef   = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
   const cladBottomRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
   const cladTopRef    = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  // For horizontal cladding, left/right/penant strips all share ONE texture
+  // (fine, since lines only need Y-phase-matching and those strips share a
+  // Y range). For vertical cladding, left and right sit at DIFFERENT X
+  // positions and need their own offset — so they get separate refs now.
   const cladSideRef   = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const cladLeftRef   = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  const cladRightRef  = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+  // Penant strips (dynamic count, 0–3) — one material per penant so each
+  // can carry its own X-phase-matched vertical texture. Reused across
+  // renders by index so color animation stays smooth.
+  const cladPenantRefs = useRef<THREE.MeshPhysicalMaterial[]>([])
+  const getPenantMat = (i: number) => {
+    while (cladPenantRefs.current.length <= i) {
+      cladPenantRefs.current.push(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
+    }
+    return cladPenantRefs.current[i]
+  }
+
+  // Per-penant vertical textures (only relevant when showVertical) — each
+  // penant strip gets its own X-phase-matched texture, computed the same
+  // way as the other vertical strips above.
+  const penantVerticalTexs = useMemo(() => {
+    if (!showVertical || !claddingLinesTex || !subWinWs || !penantWs || !penantWs.length) return []
+    const winWLocal = winW ?? 0
+    const texs: (THREE.Texture | null)[] = []
+    let cx = -winWLocal / 2
+    for (let idx = 0; idx < subWinWs.length - 1; idx++) {
+      cx += subWinWs[idx]
+      const pw = penantWs[idx]
+      if (pw > 0) {
+        const t = claddingLinesTex.clone()
+        t.repeat.set(claddingRepeatU(pw), 1)
+        const rawOffset = cx / mm(CLAD_TILE_MM)
+        t.offset.x = ((rawOffset % 1) + 1) % 1
+        t.needsUpdate = true
+        texs.push(t)
+      } else {
+        texs.push(null)
+      }
+      cx += pw
+    }
+    return texs
+  }, [showVertical, claddingLinesTex, subWinWs, penantWs, winW])
+
   useFrame(() => {
     if (!showCladding) return
     const pairs: Array<[THREE.MeshStandardMaterial, THREE.Texture | null]> = [
       [cladFullRef.current,   cladTexs.full],
       [cladBottomRef.current, cladTexs.bottom],
       [cladTopRef.current,    cladTexs.top],
-      [cladSideRef.current,   cladTexs.side],
     ]
+    if (showVertical) {
+      pairs.push([cladLeftRef.current,  (cladTexs as any).left ?? null])
+      pairs.push([cladRightRef.current, (cladTexs as any).right ?? null])
+      penantVerticalTexs.forEach((tex, i) => pairs.push([getPenantMat(i), tex]))
+    } else {
+      pairs.push([cladSideRef.current, (cladTexs as any).side ?? null])
+    }
     for (const [mat, tex] of pairs) {
       mat.color.lerp(animatedColor, 0.25)
       if (mat.map !== (tex ?? null)) {
@@ -336,21 +463,23 @@ export function FrontWall({ W, H, color, winW, winH, winYBottom, subWinWs, penan
   const r = revealMat
   const fB = showCladding ? cladBottomRef.current : outerMatRef.current
   const fT = showCladding ? cladTopRef.current    : outerMatRef.current
-  const fS = showCladding ? cladSideRef.current   : outerMatRef.current
+  const fL = showCladding ? (showVertical ? cladLeftRef.current  : cladSideRef.current) : outerMatRef.current
+  const fR = showCladding ? (showVertical ? cladRightRef.current : cladSideRef.current) : outerMatRef.current
   const bottomMats = [o, o, i, o, fB, i]
   const topMats    = [o, o, o, i, fT, i]
-  const leftMats   = [i, o, o, o, fS, i]
-  const rightMats  = [o, i, o, o, fS, i]
-  const penantMats = [i, i, o, o, fS, i]
+  const leftMats   = [i, o, o, o, fL, i]
+  const rightMats  = [o, i, o, o, fR, i]
 
   const penants: JSX.Element[] = []
   if (subWinWs && penantWs && penantWs.length) {
     let cx = -winW / 2
-    for (let i = 0; i < subWinWs.length - 1; i++) {
-      cx += subWinWs[i]
-      const pw = penantWs[i]
+    for (let idx = 0; idx < subWinWs.length - 1; idx++) {
+      cx += subWinWs[idx]
+      const pw = penantWs[idx]
+      const fP = showCladding ? (showVertical ? getPenantMat(idx) : cladSideRef.current) : outerMatRef.current
+      const penantMats = [i, i, o, o, fP, i]
       penants.push(
-        <mesh key={`pen-${i}`} position={[cx + pw / 2, winCY, 0]} material={penantMats} castShadow>
+        <mesh key={`pen-${idx}`} position={[cx + pw / 2, winCY, 0]} material={penantMats} castShadow>
           <boxGeometry args={[pw, winH, FRONT_T]} />
         </mesh>
       )
@@ -576,13 +705,15 @@ export function WindowFrame({
  *  a Gesloten paneel gets the SAME horizontal-line texture and color as the
  *  side cheeks, so it visually reads as a continuation of the side surface
  *  instead of a plain flat block. HPL / Kader styles stay flat (no lines). */
-export function ClosedPanel({ W, H, frameColor, panelColor, styleType, claddingMaterial, worldYBottom = 0 }: {
+export function ClosedPanel({ W, H, frameColor, panelColor, styleType, claddingMaterial, worldYBottom = 0, worldXLeft = 0 }: {
   W: number; H: number; frameColor: string; panelColor: string;
   styleType?: 'traditional' | 'kader';
-  claddingMaterial?: 'rondkantpanelen' | 'hpl';
+  claddingMaterial?: 'rondkantpanelen' | 'hpl' | 'composiet';
   worldYBottom?: number;
+  worldXLeft?: number;
 }) {
   const animatedPanelColor = useAnimatedColor(panelColor, 0.25)
+  const isVertical = claddingMaterial === 'composiet'
   const showCladding = styleType === 'traditional' && claddingMaterial !== 'hpl'
 
   const claddingTex = useMemo(() => {
@@ -593,28 +724,45 @@ export function ClosedPanel({ W, H, frameColor, panelColor, styleType, claddingM
     if (ctx) {
       ctx.fillStyle = '#c8c8c8'
       ctx.fillRect(0, 0, 256, 256)
-      for (let y = 0; y <= 256; y += 64) {
-        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
-        ctx.lineWidth = 6
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+      ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+      ctx.lineWidth = 6
+      if (isVertical) {
+        for (let x = 0; x <= 256; x += 64) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
+        }
+      } else {
+        for (let y = 0; y <= 256; y += 64) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+        }
       }
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    // Same real-height-based repeat as the side cheeks, so plank size matches.
-    tex.repeat.set(1, claddingRepeatV(H))
-    // ClosedPanel is rendered inside a group already offset by winYBottom in
-    // world space, but the mesh's own local UV always starts at v=0 — so
-    // without this, its lines were always in phase with world Y=0 instead of
-    // its own real world position, causing a mismatch against the FrontWall
-    // strips (which DO account for this) and the SideCheek.
-    const rawOffset = (worldYBottom + mm(CLAD_PHASE_ADJUST_MM)) / mm(CLAD_TILE_MM)
-    tex.offset.y = ((rawOffset % 1) + 1) % 1
+    if (isVertical) {
+      // Composiet — phase-align by this panel's real world LEFT-edge X, same
+      // technique as the horizontal offset below, so the vertical board
+      // seams line up with the adjacent FrontWall side-strip instead of
+      // each restarting its own pattern at x=0 (which showed as a visible
+      // mismatch/seam at the boundary).
+      tex.repeat.set(claddingRepeatU(W), 1)
+      const rawOffsetX = worldXLeft / mm(CLAD_TILE_MM)
+      tex.offset.x = ((rawOffsetX % 1) + 1) % 1
+    } else {
+      // Rabatprofiel — same real-height-based repeat as the side cheeks, so plank size matches.
+      tex.repeat.set(1, claddingRepeatV(H))
+      // ClosedPanel is rendered inside a group already offset by winYBottom in
+      // world space, but the mesh's own local UV always starts at v=0 — so
+      // without this, its lines were always in phase with world Y=0 instead of
+      // its own real world position, causing a mismatch against the FrontWall
+      // strips (which DO account for this) and the SideCheek.
+      const rawOffset = (worldYBottom + mm(CLAD_PHASE_ADJUST_MM)) / mm(CLAD_TILE_MM)
+      tex.offset.y = ((rawOffset % 1) + 1) % 1
+    }
     tex.anisotropy = 16
     tex.generateMipmaps = false
     tex.minFilter = THREE.LinearFilter
     return tex
-  }, [showCladding, H, worldYBottom])
+  }, [showCladding, isVertical, W, H, worldYBottom, worldXLeft])
 
   const panelMatRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, color: panelColor }))
   useFrame(() => {
@@ -630,7 +778,7 @@ export function ClosedPanel({ W, H, frameColor, panelColor, styleType, claddingM
   )
 }
 
-export function FlatRoof({ W, H, depth, color, isKader = false }: { W: number; H: number; depth: number; color: string; isKader?: boolean }) {
+export function FlatRoof({ W, H, depth, color, isKader = false, sideW = SIDE_W }: { W: number; H: number; depth: number; color: string; isKader?: boolean; sideW?: number }) {
   const targetColorRef = useRef(new THREE.Color(color))
   const frontMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.08, envMapIntensity: 0.5, color }))
   const topSideMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05, color: '#F7F9EF' }))
@@ -647,19 +795,19 @@ export function FlatRoof({ W, H, depth, color, isKader = false }: { W: number; H
     return createWoodMaterial(u, v, woodCol, woodRgh, woodNrm, THREE.FrontSide)
   }, [woodCol, woodRgh, woodNrm, W, depth])
 
-  const totalW   = isKader ? W + SIDE_W * 2 + mm(295) : W + (SIDE_W + ROOF_SIDE_OVH) * 2
+  const totalW   = isKader ? W + sideW * 2 + mm(295) : W + (sideW + ROOF_SIDE_OVH) * 2
   const slabLen  = depth + ROOF_OVERHANG
   const slabCtrZ = (ROOF_OVERHANG - depth) / 2
 
   return (
     <group position={[0, H, 0]}>
       <mesh position={[0, ROOF_SLAB_T / 2, slabCtrZ]} castShadow material={[
-        frontMatRef.current,
-        frontMatRef.current,
-        topSideMatRef.current,
-        innerMatRef.current,
-        frontMatRef.current,
-        topSideMatRef.current,
+        frontMatRef.current, // 0: right face (colored)
+        frontMatRef.current, // 1: left face (colored)
+        topSideMatRef.current, // 2: top face (grey — unchanged)
+        frontMatRef.current, // 3: bottom face — now follows the selected boei color instead of staying fixed white
+        frontMatRef.current, // 4: front face (colored)
+        topSideMatRef.current, // 5: back face (grey — unchanged)
       ]}>
         <boxGeometry args={[totalW, ROOF_SLAB_T, slabLen]} />
       </mesh>
@@ -917,34 +1065,80 @@ function RoofMembrane({ position, size, covering = 'bitumen' }: {
   covering?: 'bitumen' | 'epdm'
 }) {
   const isBitumen = covering === 'bitumen'
+  const [totalW, thickness, totalD] = size
 
-  const bitumenTex = useMemo(() => {
+  // Wide field strips — much wider spacing than before, matching the
+  // reference photo's wide bitumen roll strips (not the old busy fine lines).
+  const fieldTex = useMemo(() => {
     if (!isBitumen) return null
-    // Widened ~2.25x from the original 32px so the stripes/spacing read as
-    // noticeably bigger, less busy roll-seam lines.
-    const tex = createStripeTexture(72)
-    tex.repeat.set(Math.max(size[0] / mm(300), 1), Math.max(size[2] / mm(600), 1))
+    const tex = createStripeTexture(160, '#6b6b6b', '#767676', '#5c5c5c')
+    tex.repeat.set(Math.max(totalW / mm(1200), 1), Math.max(totalD / mm(2200), 1))
+    tex.anisotropy = 16
     return tex
-  }, [isBitumen, size])
+  }, [isBitumen, totalW, totalD])
 
-  const matRef = useRef(new THREE.MeshStandardMaterial({
+  const fieldMatRef = useRef(new THREE.MeshStandardMaterial({
     color: isBitumen ? '#6b6b6b' : '#3f3f3f',
     roughness: isBitumen ? 0.85 : 0.9,
     metalness: 0,
-    map: bitumenTex,
+    map: fieldTex,
   }))
-
   useEffect(() => {
-    matRef.current.color.set(isBitumen ? '#6b6b6b' : '#3f3f3f')
-    matRef.current.roughness = isBitumen ? 0.85 : 0.9
-    matRef.current.map = bitumenTex
-    matRef.current.needsUpdate = true
-  }, [isBitumen, bitumenTex])
+    fieldMatRef.current.color.set(isBitumen ? '#6b6b6b' : '#3f3f3f')
+    fieldMatRef.current.roughness = isBitumen ? 0.85 : 0.9
+    fieldMatRef.current.map = fieldTex
+    fieldMatRef.current.needsUpdate = true
+  }, [isBitumen, fieldTex])
+
+  // Border/edge strip running around the perimeter — visible in the
+  // reference photo as a distinct strip along all four sides, slightly
+  // lighter than the main field. Bitumen only (EPDM stays one flat surface).
+  const BORDER_W = mm(220)
+  const borderMatRef = useRef(new THREE.MeshStandardMaterial({ color: '#7d7d7d', roughness: 0.85, metalness: 0 }))
+  useEffect(() => {
+    borderMatRef.current.color.set('#7d7d7d')
+  }, [])
+
+  // Small daktrim/kraal edge — a thin trim strip that stays visible just
+  // past the membrane's own boundary (wider + set slightly lower than the
+  // membrane, so only its outer rim peeks out, like real roof edge trim).
+  const TRIM_W = mm(18)
+  const trimMatRef = useRef(new THREE.MeshStandardMaterial({ color: '#c9c9c9', roughness: 0.4, metalness: 0.25 }))
+
+  const fieldW = Math.max(totalW - BORDER_W * 2, mm(50))
+  const fieldD = Math.max(totalD - BORDER_W * 2, mm(50))
 
   return (
-    <mesh position={position} castShadow receiveShadow material={matRef.current}>
-      <boxGeometry args={size} />
-    </mesh>
+    <group position={position}>
+      {/* Main field */}
+      <mesh castShadow receiveShadow material={fieldMatRef.current}>
+        <boxGeometry args={[isBitumen ? fieldW : totalW, thickness, isBitumen ? fieldD : totalD]} />
+      </mesh>
+
+      {isBitumen && (
+        <>
+          {/* Front / back border strips */}
+          <mesh position={[0, 0, (totalD - BORDER_W) / 2]} castShadow receiveShadow material={borderMatRef.current}>
+            <boxGeometry args={[totalW, thickness, BORDER_W]} />
+          </mesh>
+          <mesh position={[0, 0, -(totalD - BORDER_W) / 2]} castShadow receiveShadow material={borderMatRef.current}>
+            <boxGeometry args={[totalW, thickness, BORDER_W]} />
+          </mesh>
+          {/* Left / right border strips */}
+          <mesh position={[(totalW - BORDER_W) / 2, 0, 0]} castShadow receiveShadow material={borderMatRef.current}>
+            <boxGeometry args={[BORDER_W, thickness, fieldD]} />
+          </mesh>
+          <mesh position={[-(totalW - BORDER_W) / 2, 0, 0]} castShadow receiveShadow material={borderMatRef.current}>
+            <boxGeometry args={[BORDER_W, thickness, fieldD]} />
+          </mesh>
+        </>
+      )}
+
+      {/* Daktrim/kraal — thin trim that stays visible right at the edge */}
+      <mesh position={[0, -thickness * 0.35, 0]} material={trimMatRef.current}>
+        <boxGeometry args={[totalW + TRIM_W * 2, thickness * 0.35, totalD + TRIM_W * 2]} />
+      </mesh>
+    </group>
   )
 }
 
@@ -972,6 +1166,14 @@ function FlashingBand({ position, rotation, size, roofConnection }: {
     roughness: 0.45,
     metalness: 0.3,
     map: stripeTex,
+    // Layer 3 of 3 — these bands clear the roof tile plane by only
+    // 0.12-0.72mm depending on pitch, which is far too little to reliably win
+    // the depth test at every zoom level. Pulling them TOWARD the camera
+    // guarantees the Lood/Loodvervanger strips stay visible on top of the
+    // tiles instead of being swallowed by them.
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   }))
 
   useEffect(() => {
@@ -987,8 +1189,8 @@ function FlashingBand({ position, rotation, size, roofConnection }: {
   )
 }
 
-function FasciaBoard({ W, H, depth, color, isKader = false }: {
-  W: number; H: number; depth: number; color: string; isKader?: boolean
+function FasciaBoard({ W, H, depth, color, isKader = false, sideW = SIDE_W }: {
+  W: number; H: number; depth: number; color: string; isKader?: boolean; sideW?: number
 }) {
   const targetColorRef = useRef(new THREE.Color(color))
   const frontMatRef = useRef(new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.05, color }))
@@ -996,7 +1198,7 @@ function FasciaBoard({ W, H, depth, color, isKader = false }: {
   useEffect(() => { targetColorRef.current.set(color) }, [color])
   useFrame(() => { frontMatRef.current.color.lerp(targetColorRef.current, 0.25) })
 
-  const width = isKader ? W + SIDE_W * 2 + mm(300) : W + (SIDE_W + ROOF_SIDE_OVH) * 2
+  const width = isKader ? W + sideW * 2 + mm(300) : W + (sideW + ROOF_SIDE_OVH) * 2
   const length = depth + ROOF_OVERHANG
 
   return (
@@ -1017,18 +1219,128 @@ function FasciaBoard({ W, H, depth, color, isKader = false }: {
   )
 }
 
+/** Daktrim/Dakkraal — a thin white trim strip running along the roof edge
+ *  right on top of the boei/fascia, on the front and both sides (matching
+ *  FasciaBoard's own front+depth footprint math so it lines up exactly).
+ *  Two profiles: "daktrim" is a flat box strip, "dakkraal" is a round
+ *  aluminum rod (rendered as a cylinder). Visible by default (this is not
+ *  gated behind any cladding/style choice — it always renders once a
+ *  ProceduralDormer exists). */
+function DakTrim({ W, H, depth, isKader = false, sideW = SIDE_W, trimType = 'daktrim', color = '#FFFFFF', pitchDeg = 35 }: {
+  W: number; H: number; depth: number; isKader?: boolean; sideW?: number;
+  trimType?: 'daktrim' | 'dakkraal'; color?: string; pitchDeg?: number;
+}) {
+  const isDakkraal = trimType === 'dakkraal'
+  const pitchRad = Math.max((pitchDeg * Math.PI) / 180, 0.01)
+  const matRef = useRef(new THREE.MeshStandardMaterial({
+    color,
+    roughness: isDakkraal ? 0.3 : 0.55,
+    metalness: isDakkraal ? 0.45 : 0.05,
+  }))
+  useEffect(() => {
+    matRef.current.color.set(color)
+    matRef.current.roughness = isDakkraal ? 0.3 : 0.55
+    matRef.current.metalness = isDakkraal ? 0.45 : 0.05
+  }, [color, isDakkraal])
+
+  // Same width/length/topY math as FasciaBoard, so this trim sits exactly
+  // on top of it and matches its footprint on the front and both sides.
+  const width  = isKader ? W + sideW * 2 + mm(300) : W + (sideW + ROOF_SIDE_OVH) * 2
+  const topY   = H + ROOF_SLAB_T + mm(20) + mm(20) // top surface of the mm(40)-tall FasciaBoard
+  const frontZ = ROOF_OVERHANG
+  const halfW  = width / 2
+
+  const PROFILE = mm(90)   // round rod diameter / flat strip footprint width — bigger, clearly visible
+  const FLAT_T  = mm(25)   // flat daktrim thickness
+
+  // Corner fix (flat/box variant): the FRONT piece is extended by half a
+  // profile-width on each side so it fully spans past the corner, and the
+  // SIDE pieces are shortened to start exactly where the front piece ends
+  // — clean butt joint, no overlap/gap. The round/sphere variant below
+  // uses DIFFERENT (non-extended, exact) values — see isDakkraal branch.
+  const frontWidth   = width + PROFILE
+  const sideFrontZ   = frontZ - PROFILE / 2
+
+  // The side pieces run LEVEL for their whole length, along the top edge of
+  // the cheek, and stop where the rising roof surface meets the underside of
+  // the trim — i.e. they follow the roof line instead of leaving it.
+  const roofMeetZ = (mm(5) - topY) / Math.tan(pitchRad)
+  const sideBackZ = Math.max(-depth, roofMeetZ)
+
+  if (isDakkraal) {
+    const radius = PROFILE / 2
+    // Exact (non-extended) corner math for the round variant — both the
+    // front cylinder and each side cylinder terminate PRECISELY at the
+    // sphere's center (halfW, frontZ), instead of one overshooting past it
+    // and the other falling short of it, so the sphere fully blends both
+    // directions into one smooth-looking joint instead of a visible gap or
+    // a rod poking out past the ball.
+    const rSideLength  = frontZ - sideBackZ
+    const rSideCenterZ = (frontZ + sideBackZ) / 2
+
+    return (
+      <group>
+        <mesh position={[0, topY + radius, frontZ]} rotation={[0, 0, Math.PI / 2]} material={matRef.current} castShadow>
+          <cylinderGeometry args={[radius, radius, width, 16]} />
+        </mesh>
+        {[-halfW, halfW].map((x) => (
+          <mesh key={x} position={[x, topY + radius, rSideCenterZ]} rotation={[Math.PI / 2, 0, 0]} material={matRef.current} castShadow>
+            <cylinderGeometry args={[radius, radius, rSideLength, 16]} />
+          </mesh>
+        ))}
+        {/* Sphere at each front corner, centered exactly where the front
+            cylinder's end and the side cylinder's end both meet — blends
+            both directions into one smooth rounded joint. */}
+        <mesh position={[-halfW, topY + radius, frontZ]} material={matRef.current} castShadow>
+          <sphereGeometry args={[radius, 16, 16]} />
+        </mesh>
+        <mesh position={[halfW, topY + radius, frontZ]} material={matRef.current} castShadow>
+          <sphereGeometry args={[radius, 16, 16]} />
+        </mesh>
+      </group>
+    )
+  }
+
+  // Flat/box variant — same level full-depth run.
+  const sideLength  = sideFrontZ - sideBackZ
+  const sideCenterZ = (sideFrontZ + sideBackZ) / 2
+
+  return (
+    <group>
+      <mesh position={[0, topY + FLAT_T / 2, frontZ]} material={matRef.current} castShadow>
+        <boxGeometry args={[frontWidth, FLAT_T, PROFILE]} />
+      </mesh>
+      {[-halfW, halfW].map((x) => (
+        <group key={x}>
+          <mesh position={[x, topY + FLAT_T / 2, sideCenterZ]} material={matRef.current} castShadow>
+            <boxGeometry args={[PROFILE, FLAT_T, sideLength]} />
+          </mesh>
+          {/* Corner block — bridges the seam where the front piece and this
+              side piece meet, same idea as the round variant's sphere cap,
+              so the corner reads as one blended piece instead of two boxes
+              just touching. */}
+          <mesh position={[x, topY + FLAT_T / 2, frontZ]} material={matRef.current} castShadow>
+            <boxGeometry args={[PROFILE, FLAT_T, PROFILE]} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  )
+}
+
 export function SideCheek({
-  H, depth, color, side, claddingMaterial, isKader = false,
-}: { H: number; depth: number; color: string; side: 'left' | 'right'; claddingMaterial?: 'rondkantpanelen' | 'hpl'; isKader?: boolean }) {
+  H, depth, color, side, claddingMaterial, isKader = false, sideW = SIDE_W,
+}: { H: number; depth: number; color: string; side: 'left' | 'right'; claddingMaterial?: 'rondkantpanelen' | 'hpl' | 'composiet'; isKader?: boolean; sideW?: number }) {
   const animatedColor = useAnimatedColor(color, 0.25)
-  const geom = useMemo(() => makeCheekGeom(H, depth), [H, depth])
+  const geom = useMemo(() => makeCheekGeom(H, depth, sideW), [H, depth, sideW])
   const flipX = side === 'left' ? -1 : 1
+  // Composiet is the one exception where the side cheeks now follow the
+  // front's orientation (vertical boards) — for every other choice (HPL,
+  // Rabatprofiel), side cheeks keep their original always-horizontal
+  // Rabatprofiel look, independent of the front's choice.
+  const isVertical = claddingMaterial === 'composiet'
 
   const linesTex = useMemo(() => {
-    // Side cheeks always show the Rabatprofiel stripes for Traditioneel style,
-    // regardless of whether the FRONT is set to "Gladde voorzijde" (flat) or
-    // "Rabatprofiel" — that front-only choice (claddingMaterial) should only
-    // affect the front wall, not the left/right side cheeks.
     if (isKader) return null
     const canvas = document.createElement('canvas')
     canvas.width = 256; canvas.height = 256
@@ -1036,20 +1348,30 @@ export function SideCheek({
     if (ctx) {
       ctx.fillStyle = '#c8c8c8'
       ctx.fillRect(0, 0, 256, 256)
-      for (let y = 0; y <= 256; y += 64) {
-        ctx.strokeStyle = 'rgba(20,20,20,0.75)'
-        ctx.lineWidth = 6
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+      ctx.strokeStyle = 'rgba(20,20,20,0.75)'
+      ctx.lineWidth = 6
+      if (isVertical) {
+        for (let x = 0; x <= 256; x += 64) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke()
+        }
+      } else {
+        for (let y = 0; y <= 256; y += 64) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke()
+        }
       }
     }
     const tex = new THREE.CanvasTexture(canvas)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-    tex.repeat.set(1, claddingRepeatV(H))
+    if (isVertical) {
+      tex.repeat.set(claddingRepeatU(sideW, COMPOSIET_TILE_MM_NARROW), 1)
+    } else {
+      tex.repeat.set(1, claddingRepeatV(H))
+    }
     tex.anisotropy = 16
     tex.generateMipmaps = false
     tex.minFilter = THREE.LinearFilter
     return tex
-  }, [claddingMaterial, isKader, H])
+  }, [isVertical, isKader, H, sideW])
 
   const woodCol = useTexture('/images/window_wood/COL.jpg')
   const woodRgh = useTexture('/images/window_wood/ROUGH.jpg')
@@ -1057,9 +1379,9 @@ export function SideCheek({
 
   const innerWoodMat = useMemo(() => {
     const slopeLen = Math.hypot(H, depth)
-    const { u, v } = woodRepeatFromSize(SIDE_W, slopeLen)
+    const { u, v } = woodRepeatFromSize(sideW, slopeLen)
     return createWoodMaterial(u, v, woodCol, woodRgh, woodNrm)
-  }, [woodCol, woodRgh, woodNrm, H, depth])
+  }, [woodCol, woodRgh, woodNrm, H, depth, sideW])
 
   const bodyMatRef  = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
   const outerMatRef = useRef(new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0, envMapIntensity: 0, reflectivity: 0, clearcoat: 0, side: THREE.DoubleSide }))
@@ -1081,12 +1403,12 @@ export function SideCheek({
   )
 }
 
-export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileColor }: { W: number; H: number; depth: number; pitchDeg: number; sideExt?: number; isKader?: boolean; roofTileColor?: string }) {
+export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileColor, sideW = SIDE_W }: { W: number; H: number; depth: number; pitchDeg: number; sideExt?: number; isKader?: boolean; roofTileColor?: string; sideW?: number }) {
   const pitchRad = Math.max((pitchDeg * Math.PI) / 180, 0.01)
 
   const FORWARD     = isKader ? mm(900) : mm(700)
   const BACK        = depth + mm(300)
-  const holeHW      = isKader ? (W + SIDE_W * 2 + mm(280)) / 2 : (W + SIDE_W * 2) / 2
+  const holeHW      = isKader ? (W + sideW * 2 + mm(280)) / 2 : (W + sideW * 2) / 2
   const _sideExt    = sideExt ?? holeHW
   const ROOF_W      = holeHW * 2 + _sideExt * 2
   const hw          = ROOF_W / 2
@@ -1117,6 +1439,12 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
     const repeat = (t: THREE.Texture, uRep: number, vRep: number) => {
       t.wrapS = t.wrapT = THREE.RepeatWrapping
       t.repeat.set(uRep, vRep)
+      // Anisotropic filtering — this REQUIRES a normal mipmap chain to work
+      // (mipmaps stay enabled/default here). Combining this with disabled
+      // mipmaps is an invalid/conflicting GPU texture configuration that
+      // caused the roof to render as a near-invisible sliver at a distance —
+      // that combination has been removed.
+      t.anisotropy = 16
       t.needsUpdate = true
       return t
     }
@@ -1130,6 +1458,25 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
       roughness:    0.7,
       metalness:    0.4,
       side:         THREE.FrontSide,
+      // NO depth bias on the tile plane itself — this is layer 2 of 3.
+      //
+      // History: this was originally a POSITIVE offset (push away) to stop two
+      // dormers' tile planes z-fighting. That pushed the plane behind the wood
+      // `backPanels` ~20mm underneath it when viewed near edge-on, so zoomed
+      // out the roof rendered as pale wood. Flipping it NEGATIVE fixed that but
+      // broke the Lood/Loodvervanger flashing bands, which clear the tile plane
+      // by only 0.12-0.72mm — pulling the tiles forward buried them, so
+      // toggling the button appeared to do nothing.
+      //
+      // Neither sign can be right for both, because the tile plane needs to
+      // beat what's below it and lose to what's above it. So the bias now lives
+      // on the neighbours instead, giving one unambiguous order:
+      //   backPanels  +2  (pushed back, below)
+      //   tile plane   0  (here)
+      //   FlashingBand -1 (pulled forward, above)
+      // The original z-fighting concern is already handled geometrically:
+      // MAX_ROOF_SIDE_EXT is exactly half of Scene.tsx's DORMER_GAP_MM, so
+      // neighbouring roof planes meet at the midpoint and never overlap.
       color: new THREE.Color(roofTileColor || '#ffffff'),
     })
     if (isRed) {
@@ -1202,7 +1549,7 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
 
   const backPanels = useMemo(() => {
     const tan = Math.tan(pitchRad)
-    const lift = mm(40)
+    const lift = mm(40)  // distance behind slope (reverted — the 300mm test had no confirmed effect)
     const thick = mm(50)
 
     const holeXMin = -holeHW
@@ -1244,9 +1591,20 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
   }, [pitchRad, hw, holeHW, FORWARD, BACK, HOLE_Z_BACK])
 
   const backPanelMaterials = useMemo(
-    () => backPanels.map((panel) =>
-      createWoodMaterial(panel.repeatU, panel.repeatV, woodCol, woodRgh, woodNrm)
-    ),
+    () => backPanels.map((panel) => {
+      const m = createWoodMaterial(panel.repeatU, panel.repeatV, woodCol, woodRgh, woodNrm)
+      // Layer 1 of 3 — these wood panels sit only ~20mm beneath the tile plane
+      // and span the whole roof, so at shallow viewing angles they used to win
+      // the depth test and the roof rendered as pale wood. Pushing them AWAY
+      // from the camera keeps the tiles on top at every zoom level, without
+      // biasing the tile plane itself (which would bury the flashing bands
+      // just above it). These materials are created fresh here, so mutating
+      // them affects nothing else that uses createWoodMaterial.
+      m.polygonOffset = true
+      m.polygonOffsetFactor = 2
+      m.polygonOffsetUnits = 2
+      return m
+    }),
     [backPanels, woodCol, woodRgh, woodNrm],
   )
 
@@ -1272,7 +1630,7 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
         const slabHalfLen = (depth + ROOF_OVERHANG) / 2
         const slabCtrZ = (ROOF_OVERHANG - depth) / 2
         const overhangFrontZ = slabCtrZ + slabHalfLen
-        const totalHalfW = isKader ? (W + SIDE_W * 2 + mm(280)) / 2 : (W + (SIDE_W + ROOF_SIDE_OVH) * 2) / 2
+        const totalHalfW = isKader ? (W + sideW * 2 + mm(280)) / 2 : (W + (sideW + ROOF_SIDE_OVH) * 2) / 2
         const pipeXLeft = -totalHalfW + mm(40)
         const pipeXRight = totalHalfW - mm(40)
         const overhangBackZ = slabCtrZ - slabHalfLen
@@ -1300,35 +1658,79 @@ export function RoofSurface({ W, H, depth, pitchDeg, sideExt, isKader, roofTileC
   )
 }
 
-export function PipePanel({ pitchRad, W, clipHW, isKader = false }: { pitchRad: number; W: number; clipHW: number; isKader?: boolean }) {
+export function PipePanel({ pitchRad, W, clipHW, isKader = false, sideW = SIDE_W }: { pitchRad: number; W: number; clipHW: number; isKader?: boolean; sideW?: number }) {
   const { scene } = useGLTF('/models/pipepanel.glb')
-  const cloned = useMemo(() => scene.clone(), [scene])
+  // Object3D.clone() copies the scene graph but SHARES materials between the
+  // clones. With more than one dormer in the scene, every PipePanel was
+  // writing its own clippingPlanes onto the SAME material objects below —
+  // last one to mount wins, so both dormers ended up clipped by a single
+  // dormer's region. Cloning the materials per instance gives each panel its
+  // own independent clip state.
+  const cloned = useMemo(() => {
+    const c = scene.clone()
+    c.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = Array.isArray(child.material)
+          ? child.material.map((m: THREE.Material) => m.clone())
+          : (child.material as THREE.Material).clone()
+      }
+    })
+    return c
+  }, [scene])
   const FORWARD = isKader ? mm(1050) : mm(850)
   const ATTACH_Z = isKader ? mm(900) : mm(700)
-  const totalW  = isKader ? W + SIDE_W * 2 + mm(300) : W + (SIDE_W + ROOF_SIDE_OVH) * 2
+  const totalW  = isKader ? W + sideW * 2 + mm(300) : W + (sideW + ROOF_SIDE_OVH) * 2
   const planeBottomY = -ATTACH_Z * Math.tan(pitchRad)
+
+  const groupRef = useRef<THREE.Group>(null)
 
   const clipPlanes = useMemo(() => [
     new THREE.Plane(new THREE.Vector3( 1, 0, 0),  clipHW),
     new THREE.Plane(new THREE.Vector3(-1, 0, 0),  clipHW),
   ], [clipHW])
 
+  // THREE.Plane clipping planes are evaluated in WORLD space, but these were
+  // built as +/-clipHW around world x = 0. That is only correct for a dormer
+  // standing at the origin — a second dormer sits at its own world X offset
+  // and was being clipped against a region it isn't in, so its panel was
+  // sliced away entirely while the other's rendered unclipped. Re-centre the
+  // planes on this panel's real world position.
+  //
+  // Plane keeps the half-space where normal . p + constant >= 0, so
+  // constant = clipHW -/+ worldX reduces to the original values at x = 0.
+  const worldPos = useRef(new THREE.Vector3())
+  useFrame(() => {
+    const g = groupRef.current
+    if (!g) return
+    g.getWorldPosition(worldPos.current)
+    const x = worldPos.current.x
+    clipPlanes[0].constant = clipHW - x
+    clipPlanes[1].constant = clipHW + x
+  })
+
   useEffect(() => {
     cloned.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const mats = Array.isArray(child.material) ? child.material : [child.material]
-        mats.forEach((m: THREE.Material) => { m.clippingPlanes = clipPlanes })
+        mats.forEach((m: THREE.Material) => {
+          m.clippingPlanes = clipPlanes
+          // Going from no planes to two changes the shader program, so the
+          // material has to be flagged for recompile.
+          m.needsUpdate = true
+        })
       }
     })
   }, [cloned, clipPlanes])
 
   return (
-    <primitive
-      object={cloned}
-      position={[0, planeBottomY, FORWARD]}
-      rotation={[-Math.PI / 30, Math.PI / 2, 0]}
-      scale={[-0.13, 0.13, totalW /6.9]}
-    />
+    <group ref={groupRef}>
+      <primitive
+        object={cloned}
+        position={[0, planeBottomY, FORWARD]}
+        rotation={[-Math.PI / 30, Math.PI / 2, 0]}
+        scale={[-0.13, 0.13, totalW /6.9]}
+      />
+    </group>
   )
 }
 useGLTF.preload('/models/pipepanel.glb')
@@ -1397,9 +1799,14 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
     kozijnTypes,
     kozijnSashTypes,
     kozijnPaneSashTypes,
+    wangWidth,
   } = config
 
   const pitchRad = Math.max((pitchDeg * Math.PI) / 180, 0.01)
+
+  // Both wangen (Linkerwang/Rechterwang) share this one adjustable width —
+  // falls back to the original fixed 190mm if not set.
+  const sideW = mm(wangWidth ?? 190)
 
   const panelCount  = Math.max(1, windowCopies ?? 1)
 
@@ -1431,16 +1838,30 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
 
   const halfW = W / 2
 
-  const roofTileTint = config.roofTileColor === 'antraciet' ? '#ffffff' : '#EC8A4A'
+  // Antraciet gets an actual dark tint now, instead of white/untinted. The
+  // roof's dark look was relying mostly on the normal map's simulated
+  // shadow/bump detail (normalScale is quite strong) rather than the base
+  // diffuse color — but normal maps flatten out toward "no bump" at low
+  // mip levels (distance/zoomed out), which removed that shading and left
+  // just the flat, lighter base texture color showing through. Tinting the
+  // base color dark directly means it stays dark regardless of whether the
+  // normal-map detail is visible or has flattened out.
+  const roofTileTint = config.roofTileColor === 'antraciet' ? '#3a3a3a' : '#EC8A4A'
 
   return (
     <group position={[0, -H / 2, 0]}>
-      <RoofSurface W={W} H={H} depth={depth} pitchDeg={pitchDeg} sideExt={(W_single + SIDE_W * 2) / 2} isKader={styleType === 'kader'} roofTileColor={roofTileTint} />
-
-      <PipePanel pitchRad={pitchRad} W={W} clipHW={styleType === 'kader' ? (W + SIDE_W * 2 + mm(280)) / 2 + (W_single + SIDE_W * 2) / 2 : (W + SIDE_W * 2) / 2 + (W_single + SIDE_W * 2) / 2} isKader={styleType === 'kader'} />
+      {(() => {
+        const roofSideExt = Math.min((W_single + sideW * 2) / 2, MAX_ROOF_SIDE_EXT)
+        return (
+          <>
+            <RoofSurface W={W} H={H} depth={depth} pitchDeg={pitchDeg} sideExt={roofSideExt} isKader={styleType === 'kader'} roofTileColor={roofTileTint} sideW={sideW} />
+            <PipePanel pitchRad={pitchRad} W={W} clipHW={styleType === 'kader' ? (W + sideW * 2 + mm(280)) / 2 + roofSideExt : (W + sideW * 2) / 2 + roofSideExt} isKader={styleType === 'kader'} sideW={sideW} />
+          </>
+        )
+      })()}
 
       <FrontWall
-        W={styleType === 'kader' ? W + SIDE_W * 2 + mm(280) : W + SIDE_W * 2 - mm(4)} H={H} color={frontColor}
+        W={styleType === 'kader' ? W + sideW * 2 + mm(280) : W + sideW * 2 - mm(4)} H={H} color={frontColor}
         winW={winW} winH={winH} winYBottom={winYBottom}
         subWinWs={subWinWs} penantWs={penantWs}
         styleType={styleType}
@@ -1464,6 +1885,7 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
                   styleType={styleType}
                   claddingMaterial={claddingMaterial}
                   worldYBottom={winYBottom}
+                  worldXLeft={xOff - wWidth / 2}
                 />
               ) : (
                 <>
@@ -1501,7 +1923,7 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
         })}
       </group>
 
-      <FlatRoof W={W} H={H} depth={depth} color={fasciaColor} isKader={styleType === 'kader'} />
+      <FlatRoof W={W} H={H} depth={depth} color={fasciaColor} isKader={styleType === 'kader'} sideW={sideW} />
 
       <FasciaBoard
         W={W}
@@ -1509,11 +1931,22 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
         depth={depth}
         color={fasciaColor}
         isKader={styleType === 'kader'}
+        sideW={sideW}
+      />
+
+      <DakTrim
+        W={W}
+        H={H}
+        depth={depth}
+        isKader={styleType === 'kader'}
+        sideW={sideW}
+        trimType={config.trimType ?? 'daktrim'}
+        pitchDeg={pitchDeg}
       />
 
       {(() => {
         const isKaderStyle = styleType === 'kader'
-        const totalW = isKaderStyle ? W + SIDE_W * 2 + mm(295) : W + (SIDE_W + ROOF_SIDE_OVH) * 2
+        const totalW = isKaderStyle ? W + sideW * 2 + mm(295) : W + (sideW + ROOF_SIDE_OVH) * 2
         const slabLen = depth + ROOF_OVERHANG
         const slabCtrZ = (ROOF_OVERHANG - depth) / 2
         const slabTopY = H + ROOF_SLAB_T + mm(40) + mm(3)
@@ -1527,26 +1960,26 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
       })()}
 
       <group position={[halfW + (styleType === 'kader' ? mm(150) : 0), 0, styleType === 'kader' ? -mm(10) : 0]}>
-        <SideCheek H={cheekH} depth={depth} color={frontColor} side="right" claddingMaterial={claddingMaterial} isKader={styleType === 'kader'} />
+        <SideCheek H={cheekH} depth={depth} color={frontColor} side="right" claddingMaterial={claddingMaterial} isKader={styleType === 'kader'} sideW={sideW} />
         {styleType === 'kader' && (
           <AnimatedBox
-            position={[SIDE_W / 2, (H + ROOF_SLAB_T) / 2, (ROOF_OVERHANG + mm(2)) / 2]}
-            size={[SIDE_W + mm(2), H + ROOF_SLAB_T + mm(2), ROOF_OVERHANG + mm(4)]}
+            position={[sideW / 2, (H + ROOF_SLAB_T) / 2, (ROOF_OVERHANG + mm(2)) / 2]}
+            size={[sideW + mm(2), H + ROOF_SLAB_T + mm(2), ROOF_OVERHANG + mm(4)]}
             color={frontColor}
             roughness={0.35} metalness={0.05}
           />
         )}
         {styleType === 'kader' && (
           <BoeiSideBand
-            position={[SIDE_W / 2, H + (ROOF_SLAB_T + mm(40)) / 2, (ROOF_OVERHANG - depth) / 2 + mm(10)]}
-            size={[SIDE_W + mm(6), ROOF_SLAB_T + mm(40), depth + ROOF_OVERHANG - mm(2)]}
+            position={[sideW / 2, H + (ROOF_SLAB_T + mm(40)) / 2, (ROOF_OVERHANG - depth) / 2 + mm(10)]}
+            size={[sideW + mm(6), ROOF_SLAB_T + mm(40), depth + ROOF_OVERHANG - mm(2)]}
             mainColor={frontColor}
             boeiColor={fasciaColor}
             outward="right"
           />
         )}
         <FlashingBand
-          position={[SIDE_W / 2 + mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
+          position={[sideW / 2 + mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
           rotation={[pitchRad, 0, 0]}
           size={[mm(260), mm(6), Math.hypot(cheekH, depth)]}
           roofConnection={config.roofConnection}
@@ -1554,26 +1987,26 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
       </group>
 
       <group position={[-halfW - (styleType === 'kader' ? mm(150) : 0), 0, styleType === 'kader' ? -mm(10) : 0]}>
-        <SideCheek H={cheekH} depth={depth} color={frontColor} side="left" claddingMaterial={claddingMaterial} isKader={styleType === 'kader'} />
+        <SideCheek H={cheekH} depth={depth} color={frontColor} side="left" claddingMaterial={claddingMaterial} isKader={styleType === 'kader'} sideW={sideW} />
         {styleType === 'kader' && (
           <AnimatedBox
-            position={[-SIDE_W / 2, (H + ROOF_SLAB_T) / 2, (ROOF_OVERHANG + mm(2)) / 2]}
-            size={[SIDE_W + mm(2), H + ROOF_SLAB_T + mm(2), ROOF_OVERHANG + mm(4)]}
+            position={[-sideW / 2, (H + ROOF_SLAB_T) / 2, (ROOF_OVERHANG + mm(2)) / 2]}
+            size={[sideW + mm(2), H + ROOF_SLAB_T + mm(2), ROOF_OVERHANG + mm(4)]}
             color={frontColor}
             roughness={0.35} metalness={0.05}
           />
         )}
         {styleType === 'kader' && (
           <BoeiSideBand
-            position={[-SIDE_W / 2, H + (ROOF_SLAB_T + mm(40)) / 2, (ROOF_OVERHANG - depth) / 2 + mm(10)]}
-            size={[SIDE_W + mm(6), ROOF_SLAB_T + mm(40), depth + ROOF_OVERHANG - mm(2)]}
+            position={[-sideW / 2, H + (ROOF_SLAB_T + mm(40)) / 2, (ROOF_OVERHANG - depth) / 2 + mm(10)]}
+            size={[sideW + mm(6), ROOF_SLAB_T + mm(40), depth + ROOF_OVERHANG - mm(2)]}
             mainColor={frontColor}
             boeiColor={fasciaColor}
             outward="left"
           />
         )}
         <FlashingBand
-          position={[-SIDE_W / 2 - mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
+          position={[-sideW / 2 - mm(90), (depth / 2) * Math.tan(pitchRad) + mm(3), -depth / 2]}
           rotation={[pitchRad, 0, 0]}
           size={[mm(260), mm(6), Math.hypot(cheekH, depth)]}
           roofConnection={config.roofConnection}
@@ -1581,7 +2014,7 @@ export function ProceduralDormer({ config }: { config: WindowConfig }) {
       </group>
 
       {(() => {
-        const spanX = 2 * (halfW + SIDE_W / 2 + mm(90)) + mm(260)
+        const spanX = 2 * (halfW + sideW / 2 + mm(90)) + mm(260)
         return (
           <>
             <FlashingBand
